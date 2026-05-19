@@ -1,54 +1,157 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
+import { fetchGroups, createGroup, joinGroup, searchGroups } from '../services/api';
+import GroupCard from '../components/GroupCard';
+import { PageLoader, ErrorMessage, FormError, SuccessBanner } from '../components/UI';
+import { useAsync } from '../hooks/useAsync';
+import { Search, Users } from 'lucide-react';
 
-export default function Groups() {
-  const groups = [
-    { title: "Cyber-Security Elite", inst: "Strathmore University", rank: "#1 Rank", members: "124" },
-    { title: "Neural Network Lab", inst: "University of Nairobi", rank: "#4 Rank", members: "89" },
-    { title: "Quantum Algorithms", inst: "JKUAT", rank: "#12 Rank", members: "42" },
-    { title: "Data Science Society", inst: "Kenyatta University", rank: "#2 Rank", members: "210" },
-    { title: "Blockchain Devs", inst: "Riara University", rank: "#7 Rank", members: "56" },
-    { title: "IoT Explorers", inst: "Daystar University", rank: "#15 Rank", members: "31" },
-  ];
+const Groups = () => {
+  const [activeMenu, setActiveMenu]   = useState(null); // 'create' | 'join' | null
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searching, setSearching]     = useState(false);
+  const [joining, setJoining]         = useState(null);
+  const [formError, setFormError]     = useState('');
+  const [success, setSuccess]         = useState('');
+  const [groupName, setGroupName]     = useState('');
+  const [groupDesc, setGroupDesc]     = useState('');
+  const [creating, setCreating]       = useState(false);
+
+  const fetcher = useCallback(() => fetchGroups(), []);
+  const { data: groups, loading, error, refetch } = useAsync(fetcher);
+
+  const toggleMenu = (menu) => {
+    setActiveMenu((m) => m === menu ? null : menu);
+    setFormError('');
+    setSuccess('');
+    setSearchResults(null);
+    setSearchQuery('');
+    setGroupName('');
+    setGroupDesc('');
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setFormError('');
+    try {
+      const res = await searchGroups(searchQuery);
+      setSearchResults(res);
+    } catch (e) { setFormError(e.message); }
+    finally { setSearching(false); }
+  };
+
+  const handleJoin = async (id) => {
+    setJoining(id);
+    setFormError('');
+    try {
+      await joinGroup(id);
+      setSuccess('You have joined the group!');
+      refetch();
+    } catch (e) { setFormError(e.message); }
+    finally { setJoining(null); }
+  };
+
+  const handleCreate = async () => {
+    setCreating(true);
+    setFormError('');
+    try {
+      const newGroup = await createGroup({ name: groupName, description: groupDesc });
+      setSuccess(`Group "${newGroup.name}" created!`);
+      setActiveMenu(null);
+      refetch();
+    } catch (e) { setFormError(e.message); }
+    finally { setCreating(false); }
+  };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div style={{ maxWidth: '800px' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Academic Groups</h2>
-          <p className="text-sm text-slate-500">Join specialized research and coding clusters to climb the institutional ranks.</p>
+          <h1 className="page-title">Study Groups</h1>
+          <p className="page-subtitle">Collaborate and compete together</p>
         </div>
-        <button className="px-4 py-2 bg-brand-blue text-white font-semibold text-sm rounded-lg hover:bg-blue-700">+ Create Group</button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={() => toggleMenu('join')} className="btn-primary" style={{ width: 'auto', background: activeMenu === 'join' ? 'var(--bg-surface-hover)' : 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
+            → Join group
+          </button>
+          <button onClick={() => toggleMenu('create')} className="btn-primary" style={{ width: 'auto' }}>
+            + Create group
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {[
-          { label: "Total Groups", val: "1,284" },
-          { label: "Active Institutions", val: "142" },
-          { label: "Your Points", val: "14,200" }
-        ].map((item, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center">
-            <span className="text-xs text-slate-400 font-semibold uppercase">{item.label}</span>
-            <span className="text-xl font-bold text-slate-800 mt-1">{item.val}</span>
+      {success && <SuccessBanner message={success} />}
+      {formError && <FormError message={formError} />}
+
+      {/* Join menu */}
+      {activeMenu === 'join' && (
+        <div className="card" style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.2s ease-out' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem' }}>Find a group</h3>
+            <span onClick={() => setActiveMenu(null)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>✕</span>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        {groups.map((group, i) => (
-          <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 relative">
-            <span className="absolute top-4 right-4 text-[10px] text-slate-400 font-bold">{group.rank}</span>
-            <div className="w-8 h-8 rounded bg-slate-800 mb-3"></div>
-            <h3 className="text-sm font-bold text-slate-800">{group.title}</h3>
-            <p className="text-xs text-slate-400 mt-0.5">{group.inst}</p>
-            
-            <div className="flex justify-between text-xs mt-4 pt-4 border-t border-slate-100">
-              <div><span className="text-slate-400">Members:</span> <span className="font-bold text-slate-700">{group.members}</span></div>
-              <div className="text-emerald-500 font-medium">• Private</div>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>
+                <Search size={16} />
+              </div>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Search by group name…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                style={{ margin: 0, paddingLeft: '2.5rem' }}
+              />
             </div>
-            <button className="w-full mt-4 py-2 border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-600 rounded-lg">Join via invite</button>
+            <button className="btn-primary" style={{ width: 'auto', padding: '0.5rem 1.5rem' }} onClick={handleSearch} disabled={searching}>
+              {searching ? 'Searching…' : 'Search'}
+            </button>
           </div>
-        ))}
-      </div>
+          {searchResults !== null && (
+            searchResults.length === 0
+              ? <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No groups found for "{searchQuery}".</p>
+              : searchResults.map((g) => <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />)
+          )}
+        </div>
+      )}
+
+      {/* Create menu */}
+      {activeMenu === 'create' && (
+        <div className="card" style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.2s ease-out' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem' }}>Create a new group</h3>
+            <span onClick={() => setActiveMenu(null)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>✕</span>
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Group name *</label>
+            <input type="text" className="input-field" placeholder="Kenya Code Warriors" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+          </div>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Description <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>(optional)</span></label>
+            <input type="text" className="input-field" placeholder="About your group…" value={groupDesc} onChange={(e) => setGroupDesc(e.target.value)} />
+          </div>
+          <button className="btn-primary" style={{ width: 'auto', padding: '0.5rem 1.25rem' }} onClick={handleCreate} disabled={creating}>
+            {creating ? 'Creating…' : 'Create group'}
+          </button>
+        </div>
+      )}
+
+      {error   && <ErrorMessage message={error} onRetry={refetch} />}
+      {loading && <PageLoader />}
+      {!loading && !error && groups?.length === 0 && (
+        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+          <Users size={40} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+          <p>No groups yet. Be the first to create one!</p>
+        </div>
+      )}
+      {!loading && !error && groups?.map((g) => (
+        <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />
+      ))}
     </div>
   );
-}
+};
+
+export default Groups;
