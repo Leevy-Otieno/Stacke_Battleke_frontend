@@ -1,22 +1,16 @@
-import axios from 'axios';
-
-// ================================================================
-// Axios Setup
-// ================================================================
+import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:5000/api',
+  baseURL: "http://127.0.0.1:5000/api",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
-// ================================================================
-// Attach JWT token automatically
-// ================================================================
+// adding interceptor to include token in all requests if available
 
 apiClient.interceptors.request.use((config) => {
-  const savedUser = localStorage.getItem('sb_user');
+  const savedUser = localStorage.getItem("sb_user");
 
   if (savedUser) {
     try {
@@ -31,16 +25,14 @@ apiClient.interceptors.request.use((config) => {
         };
       }
     } catch (err) {
-      console.warn('Invalid sb_user in localStorage');
+      console.warn("Invalid sb_user in localStorage");
     }
   }
 
   return config;
 });
 
-// ================================================================
-// Error Handler
-// ================================================================
+//  error handling function
 
 const handleApiError = (error) => {
   const message =
@@ -48,18 +40,16 @@ const handleApiError = (error) => {
     error.response?.data?.message ||
     error.response?.data?.details ||
     error.message ||
-    'An unexpected error occurred';
+    "An unexpected error occurred";
 
   throw new Error(message);
 };
 
-// ================================================================
-// AUTH
-// ================================================================
+// api functions for auth, challenges, leaderboard, groups, friends, notifications
 
 export const apiCheckEmail = async (email) => {
   try {
-    const { data } = await apiClient.post('/auth/check-email', { email });
+    const { data } = await apiClient.post("/auth/check-email", { email });
     return data;
   } catch (error) {
     handleApiError(error);
@@ -68,7 +58,7 @@ export const apiCheckEmail = async (email) => {
 
 export const apiSignup = async (name, email, password) => {
   try {
-    const { data } = await apiClient.post('/auth/register', {
+    const { data } = await apiClient.post("/auth/register", {
       name,
       email,
       password,
@@ -83,7 +73,7 @@ export const apiSignup = async (name, email, password) => {
 
 export const apiLogin = async (email, password) => {
   try {
-    const { data } = await apiClient.post('/auth/login', {
+    const { data } = await apiClient.post("/auth/login", {
       email,
       password,
     });
@@ -96,7 +86,7 @@ export const apiLogin = async (email, password) => {
 
 export const apiGetMe = async () => {
   try {
-    const { data } = await apiClient.get('/auth/me');
+    const { data } = await apiClient.get("/auth/me");
     return data;
   } catch (error) {
     handleApiError(error);
@@ -105,22 +95,20 @@ export const apiGetMe = async () => {
 
 export const apiUpdateProfile = async (updates) => {
   try {
-    const { data } = await apiClient.put('/users/profile', updates);
+    const { data } = await apiClient.put("/users/profile", updates);
     return data;
   } catch (error) {
     handleApiError(error);
   }
 };
 
-// ================================================================
-// CHALLENGES
-// ================================================================
+//challenges
 
-export const fetchChallenges = async (difficulty = 'all') => {
+export const fetchChallenges = async (difficulty = "all") => {
   try {
-    const { data } = await apiClient.get('/challenges', {
+    const { data } = await apiClient.get("/challenges", {
       params: {
-        difficulty: difficulty !== 'all' ? difficulty : undefined,
+        difficulty: difficulty !== "all" ? difficulty : undefined,
       },
     });
 
@@ -141,7 +129,7 @@ export const fetchChallenge = async (id) => {
 
 export const submitCode = async (challengeId, code, language) => {
   try {
-    const { data } = await apiClient.post('/submissions/submit-code', {
+    const { data } = await apiClient.post("/submissions/submit-code", {
       challenge_id: challengeId,
       code,
       language,
@@ -153,19 +141,17 @@ export const submitCode = async (challengeId, code, language) => {
   }
 };
 
-// ================================================================
-// LEADERBOARD (MATCHES YOUR FLASK BACKEND)
-// ================================================================
+// LEADERBOARD
 
-export const fetchLeaderboard = async (tab = 'global', weekNumber = null) => {
+export const fetchLeaderboard = async (tab = "global", weekNumber = null) => {
   try {
-    let url = '/leaderboard/';
+    let url = "/leaderboard/";
 
-    if (tab === 'groups') {
-      url = '/leaderboard/groups';
+    if (tab === "groups") {
+      url = "/leaderboard/groups";
     }
 
-    if (tab === 'weekly' && weekNumber) {
+    if (tab === "weekly" && weekNumber) {
       url = `/leaderboard/weekly/${weekNumber}`;
     }
 
@@ -176,13 +162,11 @@ export const fetchLeaderboard = async (tab = 'global', weekNumber = null) => {
   }
 };
 
-// ================================================================
 // GROUPS
-// ================================================================
 
 export const fetchGroups = async () => {
   try {
-    const { data } = await apiClient.get('/groups');
+    const { data } = await apiClient.get("/groups");
     return data;
   } catch (error) {
     handleApiError(error);
@@ -191,7 +175,7 @@ export const fetchGroups = async () => {
 
 export const createGroup = async ({ name, description, isPublic = true }) => {
   try {
-    const { data } = await apiClient.post('/groups', {
+    const { data } = await apiClient.post("/groups", {
       name,
       description,
       isPublic,
@@ -214,7 +198,7 @@ export const joinGroup = async (groupId) => {
 
 export const searchGroups = async (query) => {
   try {
-    const { data } = await apiClient.get('/groups/search', {
+    const { data } = await apiClient.get("/groups/search", {
       params: { q: query },
     });
 
@@ -224,13 +208,11 @@ export const searchGroups = async (query) => {
   }
 };
 
-// ================================================================
 // FRIENDS
-// ================================================================
 
 export const fetchFriends = async () => {
   try {
-    const { data } = await apiClient.get('/friends');
+    const { data } = await apiClient.get("/friends");
     return data;
   } catch (error) {
     handleApiError(error);
@@ -239,7 +221,7 @@ export const fetchFriends = async () => {
 
 export const sendFriendRequest = async (userId) => {
   try {
-    const { data } = await apiClient.post('/friends/request', {
+    const { data } = await apiClient.post("/friends/request", {
       userId,
     });
 
@@ -249,12 +231,9 @@ export const sendFriendRequest = async (userId) => {
   }
 };
 
-// ================================================================
-// NOTIFICATIONS (FIXED EXPORTS)
-// ================================================================
 // NOTIFICATIONS
 export const fetchNotifications = async () => {
-  const { data } = await apiClient.get('/notifications');
+  const { data } = await apiClient.get("/notifications");
   return data;
 };
 
@@ -264,6 +243,6 @@ export const markNotificationRead = async (id) => {
 };
 
 export const markAllNotificationsRead = async () => {
-  const { data } = await apiClient.patch('/notifications/read-all');
+  const { data } = await apiClient.patch("/notifications/read-all");
   return data;
 };
