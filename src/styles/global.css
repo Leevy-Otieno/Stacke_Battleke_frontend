@@ -1,0 +1,96 @@
+:root {
+  --bg-main: #0B1120;
+  --bg-surface: #151F32;
+  --bg-surface-hover: #1E293B;
+  --primary-green: #10B981;
+  --primary-green-hover: #059669;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --border-color: #1E293B;
+  --diff-easy: #10B981;
+  --diff-medium: #F59E0B;
+  --diff-hard: #EF4444;
+}
+
+/* Layouts */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  padding: 2rem;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+/* Components */
+.card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+.btn-primary {
+  background-color: var(--primary-green);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background-color 0.2s, opacity 0.2s;
+  width: 100%;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-green-hover);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.input-field {
+  width: 100%;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  transition: border-color 0.2s;
+}
+.input-field:focus {
+  border-color: var(--primary-green);
+  outline: none;
+}
+.page-header {
+  margin-bottom: 2rem;
+}
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Badges */
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.badge-easy   { background-color: rgba(16, 185, 129, 0.1); color: var(--diff-easy); }
+.badge-medium { background-color: rgba(245, 158, 11, 0.1);  color: var(--diff-medium); }
+.badge-hard   { background-color: rgba(239, 68, 68, 0.1);   color: var(--diff-hard); }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

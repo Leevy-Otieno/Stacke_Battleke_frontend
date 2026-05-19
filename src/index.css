@@ -1,16 +1,16 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* 🎨 Setting up custom variables for Stack-Battle KE directly in CSS */
-@theme {
-  --color-brand-blue: #0066cc;
-  --color-brand-light-blue: #e6f0ff;
-  --color-brand-dark: #1e293b;
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
-
-/* Base style setups */
 body {
-  background-color: var(--color-slate-50);
-  color: var(--color-slate-900);
-  font-family: sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; outline: none; font-family: inherit; }
+input, select, textarea { font-family: inherit; outline: none; }

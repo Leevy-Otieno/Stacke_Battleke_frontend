@@ -1,39 +1,76 @@
 import React from 'react';
-import { Search, Bell, Settings } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { LayoutDashboard, Code2, Trophy, Users, UserPlus, Bell, LogOut, Zap } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
-export default function Navbar({ title }) {
+const Navbar = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const navItems = [
+    { path: '/',              icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+    { path: '/challenges',    icon: <Code2 size={20} />,           label: 'Challenges' },
+    { path: '/leaderboard',   icon: <Trophy size={20} />,          label: 'Leaderboard' },
+    { path: '/groups',        icon: <Users size={20} />,           label: 'Groups' },
+    { path: '/friends',       icon: <UserPlus size={20} />,        label: 'Friends' },
+    { path: '/notifications', icon: <Bell size={20} />,            label: 'Notifications', badge: 1 },
+  ];
+
   return (
-    <header className="h-16 bg-white border-b border-slate-200 fixed top-0 right-0 left-64 z-10 flex items-center justify-between px-8">
-      <div className="relative w-96">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-        <input 
-          type="text" 
-          placeholder="Search challenges, users, or groups..." 
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-1.5 text-sm focus:outline-none focus:border-brand-blue"
-        />
+    <aside style={{ width: '260px', backgroundColor: 'var(--bg-main)', borderRight: '1px solid var(--border-color)', position: 'fixed', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '2rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 'bold', fontSize: '1.25rem' }}>
+        <div style={{ backgroundColor: 'var(--primary-green)', padding: '0.25rem', borderRadius: '6px', color: '#000' }}>
+          <Zap size={24} fill="currentColor" />
+        </div>
+        StackBattle
       </div>
 
-      <div className="flex items-center gap-6">
-        <button className="text-slate-500 hover:text-slate-800 relative">
-          <Bell size={20} />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-brand-blue rounded-full"></span>
-        </button>
-        <button className="text-slate-500 hover:text-slate-800">
-          <Settings size={20} />
-        </button>
-        
-        <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
-          <div className="text-right">
-            <p className="text-sm font-semibold text-slate-800">John Doe</p>
-            <p className="text-[11px] text-slate-400 font-medium">Elite Tier</p>
+      <nav style={{ flex: 1, padding: '0 1rem' }}>
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/'}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', borderRadius: '8px',
+              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+              backgroundColor: isActive ? 'var(--bg-surface)' : 'transparent',
+              marginBottom: '0.25rem', transition: 'background 0.15s',
+            })}
+          >
+            {item.icon}
+            <span style={{ flex: 1 }}>{item.label}</span>
+            {item.badge && <NotificationBell count={item.badge} />}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', cursor: 'pointer' }}
+          onClick={() => navigate('/profile')}
+        >
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-green)', fontWeight: '600' }}>
+            {user?.name?.charAt(0)}
           </div>
-          <img 
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" 
-            alt="User profile" 
-            className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-100"
-          />
+          <div>
+            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>{user?.name}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user?.role}</div>
+          </div>
         </div>
+        <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)', background: 'none', border: 'none', width: '100%' }}>
+          <LogOut size={16} />
+          <span>Log out</span>
+        </button>
       </div>
-    </header>
+    </aside>
   );
-}
+};
+
+export default Navbar;

@@ -1,61 +1,142 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Trophy, CheckCircle, Code, Save, X } from 'lucide-react';
+import { FormError, SuccessBanner } from '../components/UI';
 
-export default function Profile() {
-  const submissions = [
-    { name: "Binary Tree Maximum Path Sum", lang: "python3", status: "ACCEPTED", statusStyle: "text-emerald-600 bg-emerald-50", time: "42ms", date: "2 hours ago" },
-    { name: "Longest Valid Parentheses", lang: "cpp", status: "RUNTIME ERROR", statusStyle: "text-rose-600 bg-rose-50", time: "—", date: "5 hours ago" },
-    { name: "Trapping Rain Water", lang: "python3", status: "ACCEPTED", statusStyle: "text-emerald-600 bg-emerald-50", time: "58ms", date: "Yesterday" },
-    { name: "Sudoku Solver", lang: "cpp", status: "TIME LIMIT EXCEEDED", statusStyle: "text-amber-600 bg-amber-50", time: ">1000ms", date: "2 days ago" },
-  ];
+const INSTITUTIONS = [
+  'Moringa School', 'ALX Africa', 'Andela', 'University of Nairobi',
+  'Strathmore University', 'JKUAT', 'Other',
+];
+
+const Profile = () => {
+  const { user, updateProfile } = useAuth();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName]             = useState(user?.name || '');
+  const [email, setEmail]           = useState(user?.email || '');
+  const [institution, setInstitution] = useState(user?.institution || 'Moringa School');
+  const [saving, setSaving]         = useState(false);
+  const [formError, setFormError]   = useState('');
+  const [success, setSuccess]       = useState('');
+
+  const handleSave = async () => {
+    setSaving(true);
+    setFormError('');
+    setSuccess('');
+    try {
+      await updateProfile({ name, email, institution });
+      setSuccess('Profile updated successfully.');
+      setIsEditing(false);
+    } catch (e) {
+      setFormError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setName(user?.name || '');
+    setEmail(user?.email || '');
+    setInstitution(user?.institution || 'Moringa School');
+    setFormError('');
+    setIsEditing(false);
+  };
+
+  const displayName = user?.name || name;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl border border-slate-200">
-        <div className="flex gap-6 items-center">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" alt="avatar" className="w-24 h-24 rounded-xl object-cover" />
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-slate-800">John Doe</h2>
-            <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
-              Full-stack developer specializing in efficient algorithms and low-latency systems. Competitive programming enthusiast and mentor at Nairobi Tech Hub.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-slate-100 text-center">
-          <div><span className="text-xs text-slate-400 block font-semibold uppercase">Total Solved</span><span className="text-xl font-bold text-slate-800">1,284</span></div>
-          <div><span className="text-xs text-slate-400 block font-semibold uppercase">Success Rate</span><span className="text-xl font-bold text-slate-800">94.2%</span></div>
-          <div><span className="text-xs text-slate-400 block font-semibold uppercase">Battle Points</span><span className="text-xl font-bold text-brand-blue">24,500</span></div>
-        </div>
+    <div style={{ maxWidth: '800px' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 className="page-title">My Profile</h1>
+        {!isEditing && (
+          <button
+            onClick={() => { setIsEditing(true); setSuccess(''); }}
+            className="btn-primary"
+            style={{ width: 'auto', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+          >
+            ✎ Edit
+          </button>
+        )}
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100"><h3 className="text-sm font-bold text-slate-700">History</h3></div>
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs text-slate-400 uppercase font-bold">
-            <tr>
-              <th className="px-6 py-3">Problem Name</th>
-              <th className="px-6 py-3">Language</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Runtime</th>
-              <th className="px-6 py-3">Date</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-600">
-            {submissions.map((sub, i) => (
-              <tr key={i}>
-                <td className="px-6 py-4 text-slate-800 font-medium flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full ${sub.status === 'ACCEPTED' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                  {sub.name}
-                </td>
-                <td className="px-6 py-4"><span className="font-mono bg-slate-50 px-1.5 py-0.5 rounded text-xs text-slate-500">{sub.lang}</span></td>
-                <td className="px-6 py-4"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${sub.statusStyle}`}>{sub.status}</span></td>
-                <td className="px-6 py-4 font-mono text-xs text-slate-500">{sub.time}</td>
-                <td className="px-6 py-4 text-xs text-slate-400">{sub.date}</td>
-              </tr>
+      {success && <SuccessBanner message={success} />}
+
+      <div className="card" style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        {/* Avatar */}
+        <div style={{
+          width: '80px', height: '80px', borderRadius: '16px', flexShrink: 0,
+          backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--primary-green)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '2rem', fontWeight: '700',
+        }}>
+          {displayName.charAt(0).toUpperCase()}
+        </div>
+
+        {isEditing ? (
+          <div style={{ flex: 1, animation: 'fadeIn 0.2s ease-out' }}>
+            <FormError message={formError} />
+            {[
+              { label: 'Full Name', value: name, set: setName, type: 'text' },
+              { label: 'Email',     value: email, set: setEmail, type: 'email' },
+            ].map(({ label, value, set, type }) => (
+              <div key={label} style={{ marginBottom: '0.75rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{label}</label>
+                <input
+                  type={type} value={value}
+                  onChange={(e) => set(e.target.value)}
+                  className="input-field"
+                  style={{ margin: 0, padding: '0.5rem 1rem' }}
+                />
+              </div>
             ))}
-          </tbody>
-        </table>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Institution</label>
+              <select
+                value={institution}
+                onChange={(e) => setInstitution(e.target.value)}
+                className="input-field"
+                style={{ margin: 0, padding: '0.5rem 1rem' }}
+              >
+                {INSTITUTIONS.map((i) => <option key={i}>{i}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button onClick={handleSave} className="btn-primary" disabled={saving} style={{ width: 'auto', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Save size={16} /> {saving ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button onClick={handleCancel} className="btn-primary" style={{ width: 'auto', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <X size={16} /> Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{displayName}</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>{user?.email}</p>
+            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', flexWrap: 'wrap' }}>
+              <span className="badge" style={{ backgroundColor: 'var(--bg-main)' }}>{user?.role || 'Beginner'}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{user?.institution || institution}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+        {[
+          { label: 'Points',      value: user?.points ?? 0,  icon: <Trophy size={24} color="#F59E0B" /> },
+          { label: 'Solved',      value: '0',                icon: <CheckCircle size={24} color="var(--primary-green)" /> },
+          { label: 'Submissions', value: '1',                icon: <Code size={24} color="#3B82F6" /> },
+        ].map(({ label, value, icon }) => (
+          <div key={label} className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>{icon}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{value}</div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{label}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
-}
+};
+
+export default Profile;
