@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-
-import CodeEditor from '../components/CodeEditor';
-import SubmissionResult from '../components/SubmissionResult';
+import { Play, Send, ChevronLeft, Terminal } from 'lucide-react';
 import { PageLoader, ErrorMessage } from '../components/UI';
-
 import { useAsync } from '../hooks/useAsync';
 import { fetchChallenge, submitCode } from '../services/api';
-import { getDifficultyColor } from '../utils/helpers';
 
-const ChallengeDetail = () => {
+const ChallengeWorkspace = () => {
   const { id } = useParams();
 
   const { data: challenge, loading, error } = useAsync(
@@ -17,22 +13,33 @@ const ChallengeDetail = () => {
     [id]
   );
 
+  // Defaulting to JavaScript as the primary environment
+  const [language, setLanguage] = useState('javascript');
+  const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
-  const handleSubmit = async (code, language) => {
-    setSubmitting(true);
+  // Sync boilerplate when challenge loads
+  useEffect(() => {
+    if (challenge && challenge.boilerplate) {
+      setCode(challenge.boilerplate[language] || '// Write your solution here\n');
+    }
+  }, [challenge, language]);
 
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setResult(null); // Clear previous console logs
+    
     try {
+      // Hits the /api/submissions/submit-code route in your Flask backend
       const res = await submitCode(Number(id), code, language);
-      setResult(res);
+      setResult(res); 
     } catch (e) {
       setResult({
-        status: 'Runtime Error',
-        passed: 0,
-        total: 3,
-        points: 0,
-        runtime: '—',
+        status: 'Server Error',
+        stderr: e.message || 'Failed to connect to execution engine.',
+        passed_tests: 0,
+        total_tests: 0
       });
     } finally {
       setSubmitting(false);
@@ -44,145 +51,154 @@ const ChallengeDetail = () => {
   if (!challenge) return <ErrorMessage message="Challenge not found" />;
 
   return (
-    <div style={{ height: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column' }}>
-
-      {/* HEADER */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <Link
-          to="/challenges"
-          style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.875rem',
-            display: 'inline-block',
-            marginBottom: '1rem',
-          }}
-        >
-          ← Challenges
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0d1117', color: '#c9d1d9', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      
+      {/* TOP NAVIGATION BAR */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1.5rem', backgroundColor: '#161b22', borderBottom: '1px solid #30363d' }}>
+        <Link to="/challenges" style={{ color: '#8b949e', display: 'flex', alignItems: 'center', textDecoration: 'none', marginRight: '1.5rem', fontSize: '0.875rem' }}>
+          <ChevronLeft size={16} style={{ marginRight: '0.25rem' }} /> Back
         </Link>
-
-        <h1 className="page-title">{challenge.title}</h1>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            alignItems: 'center',
-            fontSize: '0.875rem',
-            color: 'var(--text-secondary)',
-          }}
-        >
-          <span className={`badge ${getDifficultyColor(challenge.difficulty)}`}>
-            {challenge.difficulty}
-          </span>
-
-          <span style={{ color: 'var(--primary-green)' }}>
-            +{challenge.points} pts
-          </span>
-
-          <span>⏱ {challenge.time}</span>
-        </div>
+        <h1 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, color: '#e6edf3' }}>{challenge.title}</h1>
       </div>
 
-      {/* MAIN */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '1.5rem',
-          flex: 1,
-          overflow: 'hidden',
-        }}
-      >
+      {/* THREE-PANE WORKSPACE */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        
+        {/* PANE 1: PROBLEM DESCRIPTION (Left) */}
+        <div style={{ width: '30%', minWidth: '300px', padding: '1.5rem', overflowY: 'auto', borderRight: '1px solid #30363d', backgroundColor: '#0d1117' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', fontSize: '0.75rem', fontWeight: '600' }}>
+            <span style={{ color: '#3fb950', backgroundColor: 'rgba(63, 185, 80, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+              {challenge.difficulty}
+            </span>
+            <span style={{ color: '#d2a8ff', backgroundColor: 'rgba(210, 168, 255, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+              +{challenge.points} pts
+            </span>
+          </div>
 
-        {/* LEFT */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'auto' }}>
+          <div style={{ fontSize: '0.9375rem', lineHeight: '1.6', color: '#c9d1d9', whiteSpace: 'pre-line', marginBottom: '2rem' }}>
+            {challenge.description}
+          </div>
 
-          <div className="card">
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>
-              &lt;/&gt; Problem
-            </h3>
+          <h3 style={{ fontSize: '0.875rem', textTransform: 'uppercase', color: '#8b949e', letterSpacing: '0.05em', marginBottom: '1rem' }}>Examples</h3>
+          {(challenge.examples || []).map((ex, i) => (
+            <div key={i} style={{ backgroundColor: '#161b22', padding: '1rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #30363d', fontFamily: 'monospace', fontSize: '0.875rem' }}>
+              <div style={{ color: '#8b949e', marginBottom: '0.5rem' }}>Input: <span style={{ color: '#e6edf3' }}>{(ex.input || '').replace('\n', ' / ')}</span></div>
+              <div style={{ color: '#8b949e' }}>Output: <span style={{ color: '#3fb950' }}>{ex.output}</span></div>
+            </div>
+          ))}
+        </div>
 
-            <div
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: '0.875rem',
-                lineHeight: '1.7',
-                whiteSpace: 'pre-line',
-              }}
+        {/* PANE 2: CODE EDITOR (Center) */}
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, backgroundColor: '#0d1117' }}>
+          {/* Editor Toolbar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 1rem', borderBottom: '1px solid #30363d', backgroundColor: '#161b22' }}>
+            <select 
+              value={language} 
+              onChange={(e) => setLanguage(e.target.value)}
+              style={{ backgroundColor: '#0d1117', color: '#c9d1d9', border: '1px solid #30363d', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.875rem', outline: 'none' }}
             >
-              {challenge.description}
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+            </select>
+            <div style={{ fontSize: '0.75rem', color: '#8b949e', display: 'flex', alignItems: 'center' }}>
+              Auto-save enabled
             </div>
           </div>
 
-          <div className="card">
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>
-              Test Cases
-            </h3>
+          {/* Actual Editor Component goes here (Monaco/CodeMirror) */}
+          <div style={{ flex: 1, padding: '1rem' }}>
+            <textarea
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              style={{ width: '100%', height: '100%', border: 'none', backgroundColor: 'transparent', color: '#e6edf3', fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace', fontSize: '0.9375rem', outline: 'none', resize: 'none' }}
+              spellCheck="false"
+            />
+          </div>
+        </div>
 
-            {(challenge.examples || []).map((ex, i) => (
-              <div
-                key={i}
-                style={{
-                  backgroundColor: 'var(--bg-main)',
-                  padding: '1rem',
-                  borderRadius: '6px',
-                  marginBottom: '0.75rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'monospace',
-                }}
-              >
-                <div style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Case {i + 1}
-                </div>
+        {/* PANE 3: TERMINAL & ACTIONS (Right) */}
+        <div style={{ width: '30%', minWidth: '350px', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #30363d', backgroundColor: '#0d1117' }}>
+          
+          {/* Terminal Action Bar */}
+          <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem', borderBottom: '1px solid #30363d', backgroundColor: '#161b22' }}>
+            <button 
+              disabled={submitting}
+              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', backgroundColor: '#21262d', color: '#c9d1d9', border: '1px solid #363b42', padding: '0.5rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer' }}
+            >
+              <Play size={14} /> Run Tests
+            </button>
+            <button 
+              onClick={handleSubmit}
+              disabled={submitting}
+              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', backgroundColor: '#238636', color: '#ffffff', border: '1px solid rgba(240,246,252,0.1)', padding: '0.5rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer' }}
+            >
+              {submitting ? <PageLoader size={14} /> : <Send size={14} />} Submit
+            </button>
+          </div>
 
+          {/* Terminal Output Area */}
+          <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8b949e', marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+              <Terminal size={14} /> Output Console
+            </div>
+
+            {!result && !submitting && (
+              <div style={{ color: '#484f58', fontStyle: 'italic' }}>
+                Run your code to see the output logs here...
+              </div>
+            )}
+
+            {submitting && (
+              <div style={{ color: '#58a6ff' }}>Executing code on Piston sandbox...</div>
+            )}
+
+            {/* Render Backend API Results */}
+            {result && !submitting && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                
+                {/* Final Status */}
                 <div>
-                  Input:{' '}
-                  <span style={{ color: 'var(--text-primary)' }}>
-                    {(ex.input || '').replace(/\n/g, ' / ')}
+                  Status: <span style={{ 
+                    fontWeight: 'bold', 
+                    color: result.status === 'Accepted' ? '#3fb950' : '#f85149' 
+                  }}>
+                    {result.status}
                   </span>
                 </div>
-
-                <div>
-                  Expected:{' '}
-                  <span style={{ color: 'var(--primary-green)' }}>
-                    {ex.output}
-                  </span>
+                
+                {/* Tests Passed / Score */}
+                <div style={{ color: '#c9d1d9' }}>
+                  Tests Passed: {result.passed_tests} / {result.total_tests}
+                  {result.score !== undefined && ` | Score: +${result.score}`}
                 </div>
 
-                {ex.explanation && (
-                  <div style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.8rem' }}>
-                    {ex.explanation}
+                {/* Standard Output (stdout) */}
+                {result.stdout && (
+                  <div>
+                    <div style={{ color: '#8b949e', fontSize: '0.75rem', marginBottom: '0.25rem' }}>STDOUT:</div>
+                    <div style={{ backgroundColor: '#161b22', padding: '0.75rem', borderRadius: '4px', color: '#e6edf3', whiteSpace: 'pre-wrap', border: '1px solid #30363d' }}>
+                      {result.stdout}
+                    </div>
                   </div>
                 )}
-              </div>
-            ))}
 
-            {challenge.hiddenTests > 0 && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                👁 {challenge.hiddenTests} hidden test case
-                {challenge.hiddenTests > 1 ? 's' : ''}
+                {/* Standard Error (stderr) */}
+                {result.stderr && (
+                  <div>
+                    <div style={{ color: '#8b949e', fontSize: '0.75rem', marginBottom: '0.25rem' }}>STDERR:</div>
+                    <div style={{ backgroundColor: 'rgba(248, 81, 73, 0.1)', padding: '0.75rem', borderRadius: '4px', color: '#f85149', whiteSpace: 'pre-wrap', border: '1px solid rgba(248, 81, 73, 0.4)' }}>
+                      {result.stderr}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
-
-        {/* RIGHT */}
-        <div>
-          <CodeEditor
-            boilerplate={challenge.boilerplate}
-            onSubmit={handleSubmit}
-            submitting={submitting}
-          />
-        </div>
+        
       </div>
-
-      <SubmissionResult
-        result={result}
-        onClose={() => setResult(null)}
-        onResubmit={() => setResult(null)}
-      />
     </div>
   );
 };
 
-export default ChallengeDetail;
+export default ChallengeWorkspace;
