@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL?.trim();
+const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
 
 const apiClient = axios.create({
   baseURL: `${BASE_URL}/api`,
@@ -12,99 +12,106 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   try {
     const rawUser = localStorage.getItem("sb_user");
+
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
-      const token = parsed?.access_token || parsed?.token || parsed?.data?.token;
-      if (token) config.headers.Authorization = `Bearer ${token}`;
+
+      const token =
+        parsed?.access_token ||
+        parsed?.token ||
+        parsed?.data?.token;
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
   } catch {
     localStorage.removeItem("sb_user");
   }
+
   return config;
 });
 
-const handleError = (err) => {
-  const message =
-    err?.response?.data?.error ||
-    err?.response?.data?.message ||
-    err?.message ||
-    "Something went wrong";
-  throw new Error(message);
-};
+const getData = (res) => res?.data;
 
 export const fetchChallenges = async (difficulty = "all") => {
-  const { data } = await apiClient.get("/challenges", {
+  const res = await apiClient.get("/challenges", {
     params: difficulty !== "all" ? { difficulty } : {},
   });
-  return data?.data || [];
+  return getData(res)?.data || [];
 };
 
 export const fetchChallenge = async (id) => {
-  const { data } = await apiClient.get(`/challenges/${id}`);
-  return data?.data || null;
+  const res = await apiClient.get(`/challenges/${id}`);
+  return getData(res)?.data || null;
 };
 
 export const submitCode = async (challengeId, code, language) => {
-  const { data } = await apiClient.post("/submissions/submit-code", {
+  const res = await apiClient.post("/submissions/submit-code", {
     challenge_id: challengeId,
     code,
     language,
   });
-  return data;
+  return getData(res);
 };
 
 export const fetchLeaderboard = async (tab) => {
   let path = "/leaderboard";
+
   if (tab === "groups") path = "/leaderboard/groups";
   if (tab === "weekly") path = "/leaderboard/weekly/1";
 
-  const { data } = await apiClient.get(path);
-  return data?.data || [];
+  const res = await apiClient.get(path);
+  return getData(res)?.data || [];
 };
 
 export const fetchGroups = async () => {
-  const { data } = await apiClient.get("/groups");
-  return data?.data || [];
+  const res = await apiClient.get("/groups");
+  return getData(res)?.data || [];
 };
 
 export const createGroup = async (payload) => {
-  const { data } = await apiClient.post("/groups", payload);
-  return data;
+  const res = await apiClient.post("/groups", payload);
+  return getData(res);
 };
 
 export const joinGroup = async (invite_code) => {
-  const { data } = await apiClient.post("/groups/join", { invite_code });
-  return data;
+  const res = await apiClient.post("/groups/join", { invite_code });
+  return getData(res);
 };
 
 export const searchGroups = async (q) => {
-  const { data } = await apiClient.get("/groups/search", { params: { q } });
-  return data;
+  const res = await apiClient.get("/groups/search", {
+    params: { q },
+  });
+  return getData(res);
 };
 
 export const fetchFriends = async () => {
-  const { data } = await apiClient.get("/friends");
-  return data;
+  const res = await apiClient.get("/friends");
+  return getData(res);
 };
 
 export const sendFriendRequest = async (receiver_id) => {
-  const { data } = await apiClient.post("/friends/request", { receiver_id });
-  return data;
+  const res = await apiClient.post("/friends/request", {
+    receiver_id,
+  });
+  return getData(res);
 };
 
 export const fetchNotifications = async () => {
-  const { data } = await apiClient.get("/notifications");
-  return data;
+  const res = await apiClient.get("/notifications");
+  return getData(res);
 };
 
 export const markNotificationRead = async (id) => {
-  const { data } = await apiClient.put(`/notifications/${id}/read`);
-  return data;
+  const res = await apiClient.put(`/notifications/${id}/read`);
+  return getData(res);
 };
 
 export const markAllNotificationsRead = async () => {
-  const { data } = await apiClient.put("/notifications/read-all");
-  return data;
+  const res = await apiClient.put("/notifications/read-all");
+  return getData(res);
 };
 
 export default apiClient;
