@@ -2,10 +2,6 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.trim();
 
-if (!BASE_URL) {
-  console.error("❌ VITE_API_URL is missing in .env");
-}
-
 const apiClient = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {
@@ -17,24 +13,17 @@ apiClient.interceptors.request.use(
   (config) => {
     try {
       const rawUser = localStorage.getItem("sb_user");
-
       if (rawUser) {
         const parsed = JSON.parse(rawUser);
-
         const token =
           parsed?.access_token ||
           parsed?.token ||
           parsed?.data?.token;
-
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        if (token) config.headers.Authorization = `Bearer ${token}`;
       }
-    } catch (err) {
-      console.warn("Invalid auth storage - clearing");
+    } catch {
       localStorage.removeItem("sb_user");
     }
-
     return config;
   },
   (error) => Promise.reject(error)
@@ -46,8 +35,7 @@ const handleError = (err) => {
     err?.response?.data?.message ||
     err?.message ||
     "Something went wrong";
-
-  console.error("API ERROR:", message);
+  console.error(message);
   throw new Error(message);
 };
 
@@ -80,7 +68,6 @@ export const apiLogin = async (email, password) => {
       email,
       password,
     });
-
     localStorage.setItem("sb_user", JSON.stringify(data));
     return data;
   } catch (err) {
@@ -117,10 +104,8 @@ export const fetchChallenges = async (difficulty = "all") => {
         difficulty: difficulty !== "all" ? difficulty : undefined,
       },
     });
-
     return data?.data || [];
-  } catch (err) {
-    console.log("fetchChallenges error:", err.message);
+  } catch {
     return [];
   }
 };
@@ -129,8 +114,7 @@ export const fetchChallenge = async (id) => {
   try {
     const { data } = await apiClient.get(`/challenges/${id}`);
     return data?.data || null;
-  } catch (err) {
-    console.log(err);
+  } catch {
     return null;
   }
 };
@@ -142,25 +126,20 @@ export const submitCode = async (challengeId, code, language) => {
       code,
       language,
     });
-
     return data;
   } catch (err) {
     handleError(err);
   }
 };
 
-
 export const fetchLeaderboard = async (tab) => {
   try {
     let path = "/leaderboard/";
-
     if (tab === "groups") path = "/leaderboard/groups";
     if (tab === "weekly") path = "/leaderboard/weekly/1";
-
     const res = await apiClient.get(path);
     return res?.data?.data || res?.data || [];
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 };
@@ -169,8 +148,7 @@ export const fetchGroups = async () => {
   try {
     const { data } = await apiClient.get("/groups");
     return data?.data || data || [];
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 };
@@ -214,8 +192,7 @@ export const fetchFriends = async () => {
   try {
     const { data } = await apiClient.get("/friends");
     return data;
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 };
@@ -235,8 +212,7 @@ export const fetchNotifications = async () => {
   try {
     const { data } = await apiClient.get("/notifications");
     return data;
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 };
