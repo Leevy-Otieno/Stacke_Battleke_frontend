@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 
-/**
- * useAsync — runs an async fn, tracks {data, loading, error}.
- * Pass `deps` to re-run when they change; pass [] to run once.
- */
 export const useAsync = (fn, deps = []) => {
   const [state, setState] = useState({ data: null, loading: true, error: null });
 
@@ -15,7 +11,6 @@ export const useAsync = (fn, deps = []) => {
     } catch (e) {
       setState({ data: null, loading: false, error: e.message || 'Something went wrong.' });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => { run(); }, [run]);
