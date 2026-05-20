@@ -1,17 +1,51 @@
-# React + Vite
+# STACK BATTLE KE
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An open-source, interactive competitive programming platform where developers can tackle coding challenges, climb the leaderboards, form groups, and track their progress via a personalized dashboard. Think LeetCode, but built for community and competition.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## React Compiler
+##  Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Code Challenges
+Multi-Language Support: Write, test, and submit code in Python, JavaScript, Java, C++, and more.
+Instant Feedback: Real-time code execution with automated test case validation.
+Difficulty Scaling: Challenges categorized by Easy, Medium, and Hard.
 
-## Expanding the ESLint configuration
+###  Rankings & Leaderboards
+Global Standings: See where you rank among all developers globally based on points earned.
+Dynamic Scoring: Earn points based on execution time, memory optimization, and difficulty level.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-# OP-Woking-BSKE
+###  Groups & Communities
+Private/Public Groups: Create or join coding circles with friends, classmates, or colleagues.
+Group Leaderboards: Compete directly within your workspace or university group to see who reigns supreme.
+
+###  Interactive Dashboard
+Progress Tracking: Beautiful visualization of solved vs. unsolved problems.
+Activity Heatmap: Git-style contribution calendar tracking your daily coding streaks.
+Category Breakdown: Insights into which data structures or algorithms you need to practice mos
+---
+
+## Tech Stack
+
+Frontend: React.js  Tailwind CSS, 
+Backend:   Python 
+Database: PostgreSQL (for relational user data) & Redis (for quick leaderboard caching)
+Code Execution Engine: Monaco  / Judge0 (Isolated sandbox environment for running user code safely)
+
+---
+
+##  Getting Started
+
+Follow these steps to get a local copy of the project up and running.
+
+### Prerequisites
+* Node.js (v18+ recommended)
+* Docker (for the code execution environment)
+* PostgreSQL / MongoDB
+
+### Installation
+
+1. Clone the repository:
+   bash
+   git clone [https://github.com/yourusername/codeclash.git](https://github.com/yourusername/codeclash.git)
+   cd codeclash
