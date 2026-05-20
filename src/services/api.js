@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL?.trim();
 
 if (!BASE_URL) {
   console.error("❌ VITE_API_URL is missing in .env");
@@ -39,7 +39,6 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
 
 const handleError = (err) => {
   const message =
@@ -166,7 +165,6 @@ export const fetchLeaderboard = async (tab) => {
   }
 };
 
-
 export const fetchGroups = async () => {
   try {
     const { data } = await apiClient.get("/groups");
@@ -211,7 +209,6 @@ export const searchGroups = async (query) => {
     handleError(err);
   }
 };
-
 
 export const fetchFriends = async () => {
   try {
