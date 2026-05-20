@@ -2,6 +2,10 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.trim();
 
+if (!BASE_URL) {
+  console.error("VITE_API_URL is missing in .env file");
+}
+
 const apiClient = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {
@@ -9,25 +13,28 @@ const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use(
-  (config) => {
+apiClient.interceptors.request.use((config) => {
+  const rawUser = localStorage.getItem("sb_user");
+
+  if (rawUser) {
     try {
-      const rawUser = localStorage.getItem("sb_user");
-      if (rawUser) {
-        const parsed = JSON.parse(rawUser);
-        const token =
-          parsed?.access_token ||
-          parsed?.token ||
-          parsed?.data?.token;
-        if (token) config.headers.Authorization = `Bearer ${token}`;
+      const parsed = JSON.parse(rawUser);
+
+      const token =
+        parsed?.access_token ||
+        parsed?.token ||
+        parsed?.data?.token;
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     } catch {
       localStorage.removeItem("sb_user");
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  }
+
+  return config;
+});
 
 const handleError = (err) => {
   const message =
@@ -35,7 +42,8 @@ const handleError = (err) => {
     err?.response?.data?.message ||
     err?.message ||
     "Something went wrong";
-  console.error(message);
+
+  console.error("API ERROR:", message);
   throw new Error(message);
 };
 
@@ -68,6 +76,7 @@ export const apiLogin = async (email, password) => {
       email,
       password,
     });
+
     localStorage.setItem("sb_user", JSON.stringify(data));
     return data;
   } catch (err) {
@@ -104,8 +113,10 @@ export const fetchChallenges = async (difficulty = "all") => {
         difficulty: difficulty !== "all" ? difficulty : undefined,
       },
     });
+
     return data?.data || [];
-  } catch {
+  } catch (err) {
+    console.log("fetchChallenges error:", err?.message);
     return [];
   }
 };
@@ -126,6 +137,7 @@ export const submitCode = async (challengeId, code, language) => {
       code,
       language,
     });
+
     return data;
   } catch (err) {
     handleError(err);
@@ -135,8 +147,10 @@ export const submitCode = async (challengeId, code, language) => {
 export const fetchLeaderboard = async (tab) => {
   try {
     let path = "/leaderboard/";
+
     if (tab === "groups") path = "/leaderboard/groups";
     if (tab === "weekly") path = "/leaderboard/weekly/1";
+
     const res = await apiClient.get(path);
     return res?.data?.data || res?.data || [];
   } catch {
