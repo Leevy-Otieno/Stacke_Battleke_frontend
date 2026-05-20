@@ -1,35 +1,32 @@
-import axios from 'axios';
-
-// ======================================================
-// AXIOS INSTANCE (ONLY ONE SOURCE OF TRUTH)
-// ======================================================
+import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:5000/api',
+  baseURL: import.meta.env.VITE_API_URL + "/api",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
-
-// ======================================================
-// AUTH INTERCEPTOR (JWT ATTACHMENT)
-// ======================================================
 
 apiClient.interceptors.request.use(
   (config) => {
     try {
-      const user = localStorage.getItem('sb_user');
+      const rawUser = localStorage.getItem("sb_user");
 
-      if (user) {
-        const parsed = JSON.parse(user);
-        const token = parsed?.access_token || parsed?.token;
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+
+        const token =
+          parsed?.access_token ||
+          parsed?.token ||
+          parsed?.data?.token;
 
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
       }
     } catch (err) {
-      console.warn('Invalid auth storage');
+      console.warn("Invalid auth storage - clearing");
+      localStorage.removeItem("sb_user");
     }
 
     return config;
@@ -37,27 +34,20 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ======================================================
-// GLOBAL ERROR HANDLER (SAFE)
-// ======================================================
-
 const handleError = (err) => {
-  console.error('API ERROR:', err?.response?.data || err.message);
-  throw new Error(
+  const message =
     err?.response?.data?.error ||
     err?.response?.data?.message ||
-    err.message ||
-    'Something went wrong'
-  );
-};
+    err?.message ||
+    "Something went wrong";
 
-// ======================================================
-// AUTH
-// ======================================================
+  console.error("API ERROR:", message);
+  throw new Error(message);
+};
 
 export const apiCheckEmail = async (email) => {
   try {
-    const { data } = await apiClient.post('/auth/check-email', { email });
+    const { data } = await apiClient.post("/auth/check-email", { email });
     return data;
   } catch (err) {
     handleError(err);
@@ -66,7 +56,7 @@ export const apiCheckEmail = async (email) => {
 
 export const apiSignup = async (name, email, password) => {
   try {
-    const { data } = await apiClient.post('/auth/register', {
+    const { data } = await apiClient.post("/auth/register", {
       name,
       email,
       password,
@@ -80,12 +70,12 @@ export const apiSignup = async (name, email, password) => {
 
 export const apiLogin = async (email, password) => {
   try {
-    const { data } = await apiClient.post('/auth/login', {
+    const { data } = await apiClient.post("/auth/login", {
       email,
       password,
     });
 
-    localStorage.setItem('sb_user', JSON.stringify(data));
+    localStorage.setItem("sb_user", JSON.stringify(data));
     return data;
   } catch (err) {
     handleError(err);
@@ -93,12 +83,12 @@ export const apiLogin = async (email, password) => {
 };
 
 export const apiLogout = () => {
-  localStorage.removeItem('sb_user');
+  localStorage.removeItem("sb_user");
 };
 
 export const apiGetMe = async () => {
   try {
-    const { data } = await apiClient.get('/auth/me');
+    const { data } = await apiClient.get("/auth/me");
     return data;
   } catch (err) {
     handleError(err);
@@ -107,22 +97,18 @@ export const apiGetMe = async () => {
 
 export const apiUpdateProfile = async (updates) => {
   try {
-    const { data } = await apiClient.put('/users/profile', updates);
+    const { data } = await apiClient.put("/users/profile", updates);
     return data;
   } catch (err) {
     handleError(err);
   }
 };
 
-// ======================================================
-// CHALLENGES
-// ======================================================
-
-export const fetchChallenges = async (difficulty = 'all') => {
+export const fetchChallenges = async (difficulty = "all") => {
   try {
-    const { data } = await apiClient.get('/challenges/', {
+    const { data } = await apiClient.get("/challenges/", {
       params: {
-        difficulty: difficulty !== 'all' ? difficulty : undefined,
+        difficulty: difficulty !== "all" ? difficulty : undefined,
       },
     });
 
@@ -143,13 +129,9 @@ export const fetchChallenge = async (id) => {
   }
 };
 
-// ======================================================
-// SUBMISSIONS
-// ======================================================
-
 export const submitCode = async (challengeId, code, language) => {
   try {
-    const { data } = await apiClient.post('/submissions/submit-code', {
+    const { data } = await apiClient.post("/submissions/submit-code", {
       challenge_id: challengeId,
       code,
       language,
@@ -161,15 +143,12 @@ export const submitCode = async (challengeId, code, language) => {
   }
 };
 
-// ======================================================
-// LEADERBOARD
-// ======================================================
-
 export const fetchLeaderboard = async (tab) => {
   try {
-    let path = '/leaderboard/';
-    if (tab === 'groups') path = '/leaderboard/groups';
-    if (tab === 'weekly') path = '/leaderboard/weekly/1'; 
+    let path = "/leaderboard/";
+
+    if (tab === "groups") path = "/leaderboard/groups";
+    if (tab === "weekly") path = "/leaderboard/weekly/1";
 
     const res = await apiClient.get(path);
     return res?.data?.data || res?.data || [];
@@ -179,13 +158,9 @@ export const fetchLeaderboard = async (tab) => {
   }
 };
 
-// ======================================================
-// GROUPS
-// ======================================================
-
 export const fetchGroups = async () => {
   try {
-    const { data } = await apiClient.get('/groups');
+    const { data } = await apiClient.get("/groups");
     return data?.data || data || [];
   } catch (err) {
     console.log(err);
@@ -195,7 +170,7 @@ export const fetchGroups = async () => {
 
 export const createGroup = async ({ name, description, isPublic = true }) => {
   try {
-    const { data } = await apiClient.post('/groups', {
+    const { data } = await apiClient.post("/groups", {
       name,
       description,
       isPublic,
@@ -208,7 +183,9 @@ export const createGroup = async ({ name, description, isPublic = true }) => {
 
 export const joinGroup = async (inviteCode) => {
   try {
-    const { data } = await apiClient.post(`/groups/join`, { invite_code: inviteCode });
+    const { data } = await apiClient.post("/groups/join", {
+      invite_code: inviteCode,
+    });
     return data;
   } catch (err) {
     handleError(err);
@@ -217,7 +194,7 @@ export const joinGroup = async (inviteCode) => {
 
 export const searchGroups = async (query) => {
   try {
-    const { data } = await apiClient.get('/groups/search', {
+    const { data } = await apiClient.get("/groups/search", {
       params: { q: query },
     });
     return data;
@@ -226,13 +203,9 @@ export const searchGroups = async (query) => {
   }
 };
 
-// ======================================================
-// FRIENDS
-// ======================================================
-
 export const fetchFriends = async () => {
   try {
-    const { data } = await apiClient.get('/friends');
+    const { data } = await apiClient.get("/friends");
     return data;
   } catch (err) {
     console.log(err);
@@ -242,7 +215,7 @@ export const fetchFriends = async () => {
 
 export const sendFriendRequest = async (userId) => {
   try {
-    const { data } = await apiClient.post('/friends/request', {
+    const { data } = await apiClient.post("/friends/request", {
       receiver_id: userId,
     });
     return data;
@@ -251,13 +224,9 @@ export const sendFriendRequest = async (userId) => {
   }
 };
 
-// ======================================================
-// NOTIFICATIONS
-// ======================================================
-
 export const fetchNotifications = async () => {
   try {
-    const { data } = await apiClient.get('/notifications');
+    const { data } = await apiClient.get("/notifications");
     return data;
   } catch (err) {
     console.log(err);
@@ -274,19 +243,13 @@ export const markNotificationRead = async (id) => {
   }
 };
 
-// THE MISSING FUNCTION:
 export const markAllNotificationsRead = async () => {
   try {
-    const { data } = await apiClient.put('/notifications/read-all');
+    const { data } = await apiClient.put("/notifications/read-all");
     return data;
   } catch (err) {
     handleError(err);
   }
 };
 
-// ======================================================
-// EXPORTS (IMPORTANT - DO NOT REMOVE ANYTHING BELOW)
-// ======================================================
-
 export default apiClient;
-export { apiClient };
