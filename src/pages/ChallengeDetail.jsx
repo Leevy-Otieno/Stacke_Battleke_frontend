@@ -8,10 +8,14 @@ import { fetchChallenge, submitCode } from '../services/api';
 const ChallengeWorkspace = () => {
   const { id } = useParams();
 
-  const { data: challenge, loading, error } = useAsync(
+  // 1. Fetch the raw response data from your Flask API
+  const { data: responseData, loading, error } = useAsync(
     () => fetchChallenge(id),
     [id]
   );
+
+  // 2. Safely unwrap the nested data (handles both {success: true, data: {...}} and direct objects)
+  const challenge = responseData?.success ? responseData.data : responseData;
 
   // Defaulting to JavaScript as the primary environment
   const [language, setLanguage] = useState('javascript');
@@ -23,6 +27,9 @@ const ChallengeWorkspace = () => {
   useEffect(() => {
     if (challenge && challenge.boilerplate) {
       setCode(challenge.boilerplate[language] || '// Write your solution here\n');
+    } else if (challenge && challenge.starter_code_javascript) {
+      // Fallback if the backend isn't using the Marshmallow schema yet
+      setCode(language === 'javascript' ? challenge.starter_code_javascript : challenge.starter_code_python || '');
     }
   }, [challenge, language]);
 
@@ -71,12 +78,14 @@ const ChallengeWorkspace = () => {
               {challenge.difficulty}
             </span>
             <span style={{ color: '#d2a8ff', backgroundColor: 'rgba(210, 168, 255, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
-              +{challenge.points} pts
+              {/* Safely handle Marshmallow mapping vs raw DB column */}
+              +{challenge.points || challenge.points_reward} pts
             </span>
           </div>
 
           <div style={{ fontSize: '0.9375rem', lineHeight: '1.6', color: '#c9d1d9', whiteSpace: 'pre-line', marginBottom: '2rem' }}>
-            {challenge.description}
+            {/* Safely handle Marshmallow mapping vs raw DB column */}
+            {challenge.desc || challenge.description}
           </div>
 
           <h3 style={{ fontSize: '0.875rem', textTransform: 'uppercase', color: '#8b949e', letterSpacing: '0.05em', marginBottom: '1rem' }}>Examples</h3>
@@ -86,6 +95,13 @@ const ChallengeWorkspace = () => {
               <div style={{ color: '#8b949e' }}>Output: <span style={{ color: '#3fb950' }}>{ex.output}</span></div>
             </div>
           ))}
+          
+          {/* Show hidden test case indicator if available via Schema */}
+          {challenge.hiddenTests > 0 && (
+            <div style={{ fontSize: '0.8125rem', color: '#8b949e', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', padding: '0.75rem', backgroundColor: '#161b22', borderRadius: '6px', border: '1px dashed #30363d' }}>
+              🔒 {challenge.hiddenTests} hidden test case{challenge.hiddenTests > 1 ? 's' : ''} run on submission
+            </div>
+          )}
         </div>
 
         {/* PANE 2: CODE EDITOR (Center) */}
@@ -105,7 +121,7 @@ const ChallengeWorkspace = () => {
             </div>
           </div>
 
-          {/* Actual Editor Component goes here (Monaco/CodeMirror) */}
+          {/* Actual Editor Component */}
           <div style={{ flex: 1, padding: '1rem' }}>
             <textarea
               value={code}
