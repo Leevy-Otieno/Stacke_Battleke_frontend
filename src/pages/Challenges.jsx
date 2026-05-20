@@ -11,11 +11,11 @@ const Challenges = () => {
   const [activeFilter, setActiveFilter] = useState('All');
 
   const fetcher = useCallback(async () => {
-    const res = await fetchChallenges(
+    const data = await fetchChallenges(
       activeFilter === 'All' ? 'all' : activeFilter
     );
 
-    return Array.isArray(res) ? res : [];
+    return Array.isArray(data) ? data : [];
   }, [activeFilter]);
 
   const {
@@ -61,6 +61,7 @@ const Challenges = () => {
                   : '1px solid var(--border-color)',
               padding: '0.4rem 1rem',
               borderRadius: '6px',
+              cursor: 'pointer',
             }}
           >
             {tab}
