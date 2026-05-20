@@ -1,7 +1,13 @@
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!BASE_URL) {
+  console.error("❌ VITE_API_URL is missing in .env");
+}
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL + "/api",
+  baseURL: `${BASE_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
@@ -33,6 +39,7 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
 
 const handleError = (err) => {
   const message =
@@ -106,7 +113,7 @@ export const apiUpdateProfile = async (updates) => {
 
 export const fetchChallenges = async (difficulty = "all") => {
   try {
-    const { data } = await apiClient.get("/challenges/", {
+    const { data } = await apiClient.get("/challenges", {
       params: {
         difficulty: difficulty !== "all" ? difficulty : undefined,
       },
@@ -114,7 +121,7 @@ export const fetchChallenges = async (difficulty = "all") => {
 
     return data?.data || [];
   } catch (err) {
-    console.log(err);
+    console.log("fetchChallenges error:", err.message);
     return [];
   }
 };
@@ -143,6 +150,7 @@ export const submitCode = async (challengeId, code, language) => {
   }
 };
 
+
 export const fetchLeaderboard = async (tab) => {
   try {
     let path = "/leaderboard/";
@@ -157,6 +165,7 @@ export const fetchLeaderboard = async (tab) => {
     return [];
   }
 };
+
 
 export const fetchGroups = async () => {
   try {
@@ -202,6 +211,7 @@ export const searchGroups = async (query) => {
     handleError(err);
   }
 };
+
 
 export const fetchFriends = async () => {
   try {
