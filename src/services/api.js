@@ -32,86 +32,210 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-const getData = (res) => res?.data;
+const handleError = (err) => {
+  const message =
+    err?.response?.data?.error ||
+    err?.response?.data?.message ||
+    err?.message ||
+    "Something went wrong";
+
+  console.error("API ERROR:", message);
+  throw new Error(message);
+};
+
+export const apiCheckEmail = async (email) => {
+  try {
+    const { data } = await apiClient.post("/auth/check-email", { email });
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const apiSignup = async (name, email, password) => {
+  try {
+    const { data } = await apiClient.post("/auth/register", {
+      name,
+      email,
+      password,
+      institution_id: null,
+    });
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const apiLogin = async (email, password) => {
+  try {
+    const { data } = await apiClient.post("/auth/login", {
+      email,
+      password,
+    });
+
+    localStorage.setItem("sb_user", JSON.stringify(data));
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const apiLogout = () => {
+  localStorage.removeItem("sb_user");
+};
+
+export const apiGetMe = async () => {
+  try {
+    const { data } = await apiClient.get("/auth/me");
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const apiUpdateProfile = async (updates) => {
+  try {
+    const { data } = await apiClient.put("/users/profile", updates);
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
+};
 
 export const fetchChallenges = async (difficulty = "all") => {
-  const res = await apiClient.get("/challenges", {
-    params: difficulty !== "all" ? { difficulty } : {},
-  });
-  return getData(res)?.data || [];
+  try {
+    const { data } = await apiClient.get("/challenges", {
+      params: difficulty !== "all" ? { difficulty } : {},
+    });
+
+    return data?.data || [];
+  } catch {
+    return [];
+  }
 };
 
 export const fetchChallenge = async (id) => {
-  const res = await apiClient.get(`/challenges/${id}`);
-  return getData(res)?.data || null;
+  try {
+    const { data } = await apiClient.get(`/challenges/${id}`);
+    return data?.data || null;
+  } catch {
+    return null;
+  }
 };
 
 export const submitCode = async (challengeId, code, language) => {
-  const res = await apiClient.post("/submissions/submit-code", {
-    challenge_id: challengeId,
-    code,
-    language,
-  });
-  return getData(res);
+  try {
+    const { data } = await apiClient.post("/submissions/submit-code", {
+      challenge_id: challengeId,
+      code,
+      language,
+    });
+
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
 };
 
 export const fetchLeaderboard = async (tab) => {
-  let path = "/leaderboard";
+  try {
+    let path = "/leaderboard";
 
-  if (tab === "groups") path = "/leaderboard/groups";
-  if (tab === "weekly") path = "/leaderboard/weekly/1";
+    if (tab === "groups") path = "/leaderboard/groups";
+    if (tab === "weekly") path = "/leaderboard/weekly/1";
 
-  const res = await apiClient.get(path);
-  return getData(res)?.data || [];
+    const { data } = await apiClient.get(path);
+    return data?.data || [];
+  } catch {
+    return [];
+  }
 };
 
 export const fetchGroups = async () => {
-  const res = await apiClient.get("/groups");
-  return getData(res)?.data || [];
+  try {
+    const { data } = await apiClient.get("/groups");
+    return data?.data || [];
+  } catch {
+    return [];
+  }
 };
 
 export const createGroup = async (payload) => {
-  const res = await apiClient.post("/groups", payload);
-  return getData(res);
+  try {
+    const { data } = await apiClient.post("/groups", payload);
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
 };
 
-export const joinGroup = async (invite_code) => {
-  const res = await apiClient.post("/groups/join", { invite_code });
-  return getData(res);
+export const joinGroup = async (inviteCode) => {
+  try {
+    const { data } = await apiClient.post("/groups/join", {
+      invite_code: inviteCode,
+    });
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
 };
 
-export const searchGroups = async (q) => {
-  const res = await apiClient.get("/groups/search", {
-    params: { q },
-  });
-  return getData(res);
+export const searchGroups = async (query) => {
+  try {
+    const { data } = await apiClient.get("/groups/search", {
+      params: { q: query },
+    });
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
 };
 
 export const fetchFriends = async () => {
-  const res = await apiClient.get("/friends");
-  return getData(res);
+  try {
+    const { data } = await apiClient.get("/friends");
+    return data;
+  } catch {
+    return [];
+  }
 };
 
-export const sendFriendRequest = async (receiver_id) => {
-  const res = await apiClient.post("/friends/request", {
-    receiver_id,
-  });
-  return getData(res);
+export const sendFriendRequest = async (userId) => {
+  try {
+    const { data } = await apiClient.post("/friends/request", {
+      receiver_id: userId,
+    });
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
 };
 
 export const fetchNotifications = async () => {
-  const res = await apiClient.get("/notifications");
-  return getData(res);
+  try {
+    const { data } = await apiClient.get("/notifications");
+    return data;
+  } catch {
+    return [];
+  }
 };
 
 export const markNotificationRead = async (id) => {
-  const res = await apiClient.put(`/notifications/${id}/read`);
-  return getData(res);
+  try {
+    const { data } = await apiClient.put(`/notifications/${id}/read`);
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
 };
 
 export const markAllNotificationsRead = async () => {
-  const res = await apiClient.put("/notifications/read-all");
-  return getData(res);
+  try {
+    const { data } = await apiClient.put("/notifications/read-all");
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
 };
 
 export default apiClient;
