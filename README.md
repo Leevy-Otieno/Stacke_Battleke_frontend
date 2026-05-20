@@ -23,7 +23,7 @@ Group Leaderboards: Compete directly within your workspace or university group t
 Progress Tracking: Beautiful visualization of solved vs. unsolved problems.
 Activity Heatmap: Git-style contribution calendar tracking your daily coding streaks.
 Category Breakdown: Insights into which data structures or algorithms you need to practice mos
----
+
 
 ## Tech Stack
 
@@ -32,20 +32,9 @@ Backend:   Python
 Database: PostgreSQL (for relational user data) & Redis (for quick leaderboard caching)
 Code Execution Engine: Monaco  / Judge0 (Isolated sandbox environment for running user code safely)
 
----
+
 
 ##  Getting Started
 
 Follow these steps to get a local copy of the project up and running.
 
-### Prerequisites
- Node.js (v18+ recommended)
- Docker (for the code execution environment)
- PostgreSQL / MongoDB
-
-### Installation
-
-1. Clone the repository:
-   bash
-   git clone [https://github.com/yourusername/codeclash.git](https://github.com/yourusername/codeclash.git)
-   cd codeclash
