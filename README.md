@@ -39,9 +39,9 @@ Code Execution Engine: Monaco  / Judge0 (Isolated sandbox environment for runnin
 Follow these steps to get a local copy of the project up and running.
 
 ### Prerequisites
-* Node.js (v18+ recommended)
-* Docker (for the code execution environment)
-* PostgreSQL / MongoDB
+ Node.js (v18+ recommended)
+ Docker (for the code execution environment)
+ PostgreSQL / MongoDB
 
 ### Installation
 
