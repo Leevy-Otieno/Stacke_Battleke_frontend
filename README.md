@@ -23,8 +23,7 @@ Group Leaderboards: Compete directly within your workspace or university group t
 Progress Tracking: Beautiful visualization of solved vs. unsolved problems.
 Activity Heatmap: Git-style contribution calendar tracking your daily coding streaks.
 Category Breakdown: Insights into which data structures or algorithms you need to practice mos
-
-
+                                                                                                                                                                                                    
 ## Tech Stack
 
 Frontend: React.js  Tailwind CSS, 
