@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// FIX: Added apiClient to imports
-import apiClient, { apiGetMe } from '../services/api';
+import apiClient from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Trophy, Zap, CheckCircle, Code } from 'lucide-react';
 
@@ -10,17 +9,19 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const [weekly, setWeekly] = useState(null);
-
-  // =========================
-  // LOAD WEEKLY CHALLENGE
-  // =========================
+  const [loadingWeekly, setLoadingWeekly] = useState(true);
+  
   useEffect(() => {
     const loadWeekly = async () => {
       try {
+        setLoadingWeekly(true);
         const res = await apiClient.get('/challenges/weekly');
         setWeekly(res.data?.data || null);
       } catch (err) {
         console.log('No weekly challenge found');
+        setWeekly(null);
+      } finally {
+        setLoadingWeekly(false);
       }
     };
 
@@ -57,14 +58,21 @@ const Dashboard = () => {
     Elite: Infinity,
   };
 
-  const nextThreshold = RANK_THRESHOLDS[user?.role] ?? 200;
-
   const pts = user?.points ?? 0;
+  const nextThreshold = RANK_THRESHOLDS[user?.role] ?? 200;
 
   const progress = Math.min(
     100,
     Math.round((pts / nextThreshold) * 100)
   );
+
+  const handleWeeklyClick = () => {
+    if (weekly?.id) {
+      navigate(`/challenges/${weekly.id}`);
+    } else {
+      navigate('/challenges');
+    }
+  };
 
   return (
     <div>
@@ -115,64 +123,61 @@ const Dashboard = () => {
           gap: '1.5rem',
         }}
       >
-        <div>
-          {/* WEEKLY CHALLENGE (MVP SAFE) */}
+        {/* WEEKLY CHALLENGE */}
+        <div
+          className="card"
+          style={{
+            backgroundColor: '#0B1A15',
+            border: '1px solid #064E3B',
+          }}
+        >
           <div
-            className="card"
             style={{
-              backgroundColor: '#0B1A15',
-              border: '1px solid #064E3B',
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '1rem',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '1rem',
-              }}
-            >
-              <div style={{ fontSize: '0.75rem' }}>
-                📅 WEEKLY CHALLENGE
-                <span
-                  style={{
-                    marginLeft: '8px',
-                    background: 'var(--primary-green)',
-                    color: '#000',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                  }}
-                >
-                  Active
-                </span>
-              </div>
-
-              <span className="badge badge-medium">
-                {weekly?.difficulty || 'Medium'}
+            <div style={{ fontSize: '0.75rem' }}>
+              WEEKLY CHALLENGE
+              <span
+                style={{
+                  marginLeft: '8px',
+                  background: 'var(--primary-green)',
+                  color: '#000',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                }}
+              >
+                Active
               </span>
             </div>
 
-            <h3 style={{ fontSize: '1.2rem' }}>
-              {weekly?.title || 'No Weekly Challenge Yet'}
-            </h3>
-
-            <p style={{ color: '#aaa', fontSize: '0.85rem' }}>
-              {weekly?.description || 'Check back later for updates'}
-            </p>
-
-            <button
-              className="btn-primary"
-              style={{ marginTop: '1rem' }}
-              onClick={() => {
-                if (weekly?.id) {
-                  navigate(`/challenges/${weekly.id}`);
-                } else {
-                  navigate('/challenges');
-                }
-              }}
-            >
-              Solve Now →
-            </button>
+            <span className="badge badge-medium">
+              {weekly?.difficulty || 'Medium'}
+            </span>
           </div>
+
+          <h3 style={{ fontSize: '1.2rem' }}>
+            {loadingWeekly
+              ? 'Loading weekly challenge...'
+              : weekly?.title || 'No Weekly Challenge Yet'}
+          </h3>
+
+          <p style={{ color: '#aaa', fontSize: '0.85rem' }}>
+            {loadingWeekly
+              ? 'Please wait...'
+              : weekly?.description || 'Check back later for updates'}
+          </p>
+
+          <button
+            className="btn-primary"
+            style={{ marginTop: '1rem', opacity: weekly?.id ? 1 : 0.6 }}
+            onClick={handleWeeklyClick}
+            disabled={!weekly?.id}
+          >
+            Solve Now →
+          </button>
         </div>
 
         {/* RIGHT SIDE */}
