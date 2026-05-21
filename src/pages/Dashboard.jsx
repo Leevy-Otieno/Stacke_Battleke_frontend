@@ -16,7 +16,8 @@ const Dashboard = () => {
       try {
         setLoadingWeekly(true);
         const res = await apiClient.get('/challenges/weekly');
-        setWeekly(res.data?.data || null);
+        // FIX: The backend returns it nested inside 'challenge'
+        setWeekly(res.data?.data?.challenge || null);
       } catch (err) {
         console.log('No weekly challenge found');
         setWeekly(null);
@@ -36,7 +37,7 @@ const Dashboard = () => {
     },
     {
       label: 'RANK TIER',
-      value: user?.role || 'Beginner',
+      value: user?.role || user?.rank_tier || 'Beginner',
       icon: <Zap size={20} color="var(--primary-green)" />,
     },
     {
@@ -59,7 +60,8 @@ const Dashboard = () => {
   };
 
   const pts = user?.points ?? 0;
-  const nextThreshold = RANK_THRESHOLDS[user?.role] ?? 200;
+  const currentRank = user?.role || user?.rank_tier || 'Beginner';
+  const nextThreshold = RANK_THRESHOLDS[currentRank] ?? 200;
 
   const progress = Math.min(
     100,
@@ -129,67 +131,99 @@ const Dashboard = () => {
           style={{
             backgroundColor: '#0B1A15',
             border: '1px solid #064E3B',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '1rem',
-            }}
-          >
-            <div style={{ fontSize: '0.75rem' }}>
-              WEEKLY CHALLENGE
-              <span
+          {/* FIX: Conditional Rendering for Loading, Active, and Empty States */}
+          {loadingWeekly ? (
+            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Loading...</h3>
+              <p style={{ color: '#aaa', fontSize: '0.85rem' }}>Fetching the weekly challenge</p>
+            </div>
+          ) : weekly ? (
+            <>
+              {/* ACTIVE STATE */}
+              <div
                 style={{
-                  marginLeft: '8px',
-                  background: 'var(--primary-green)',
-                  color: '#000',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '1rem',
                 }}
               >
-                Active
-              </span>
-            </div>
+                <div style={{ fontSize: '0.75rem' }}>
+                  WEEKLY CHALLENGE
+                  <span
+                    style={{
+                      marginLeft: '8px',
+                      background: 'var(--primary-green)',
+                      color: '#000',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    Active
+                  </span>
+                </div>
 
-            <span className="badge badge-medium">
-              {weekly?.difficulty || 'Medium'}
-            </span>
-          </div>
+                <span className="badge badge-medium" style={{
+                  backgroundColor: weekly.difficulty === 'Easy' ? '#064E3B' : weekly.difficulty === 'Hard' ? '#7F1D1D' : '#78350F',
+                  color: weekly.difficulty === 'Easy' ? '#34D399' : weekly.difficulty === 'Hard' ? '#F87171' : '#FBBF24'
+                }}>
+                  {weekly.difficulty}
+                </span>
+              </div>
 
-          <h3 style={{ fontSize: '1.2rem' }}>
-            {loadingWeekly
-              ? 'Loading weekly challenge...'
-              : weekly?.title || 'No Weekly Challenge Yet'}
-          </h3>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                {weekly.title}
+              </h3>
 
-          <p style={{ color: '#aaa', fontSize: '0.85rem' }}>
-            {loadingWeekly
-              ? 'Please wait...'
-              : weekly?.description || 'Check back later for updates'}
-          </p>
+              <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                {weekly.desc || weekly.description}
+              </p>
 
-          <button
-            className="btn-primary"
-            style={{ marginTop: '1rem', opacity: weekly?.id ? 1 : 0.6 }}
-            onClick={handleWeeklyClick}
-            disabled={!weekly?.id}
-          >
-            Solve Now →
-          </button>
+              <button
+                className="btn-primary"
+                style={{ alignSelf: 'flex-start' }}
+                onClick={handleWeeklyClick}
+              >
+                Solve Now →
+              </button>
+            </>
+          ) : (
+            <>
+              {/* EMPTY STATE */}
+              <div style={{ fontSize: '0.75rem', marginBottom: '1rem', color: '#666' }}>
+                WEEKLY CHALLENGE
+              </div>
+              <h3 style={{ fontSize: '1.2rem', color: '#888', marginBottom: '0.5rem' }}>
+                No Weekly Challenge Yet
+              </h3>
+              <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                Check back later for updates
+              </p>
+              <button
+                className="btn-primary"
+                style={{ alignSelf: 'flex-start', opacity: 0.5, cursor: 'not-allowed' }}
+                disabled
+              >
+                Solve Now →
+              </button>
+            </>
+          )}
         </div>
 
         {/* RIGHT SIDE */}
         <div>
           {/* Rank Progress */}
           <div className="card">
-            <h3>Rank Progress</h3>
+            <h3 style={{ marginBottom: '1rem' }}>Rank Progress</h3>
 
-            <div>
-              <span>{pts} pts</span> /{' '}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span>{pts} pts</span>
               <span>
-                {nextThreshold === Infinity ? '∞' : nextThreshold}
+                {nextThreshold === Infinity ? 'MAX' : `${nextThreshold} pts`}
               </span>
             </div>
 
@@ -206,6 +240,8 @@ const Dashboard = () => {
                   width: `${progress}%`,
                   height: '100%',
                   background: 'var(--primary-green)',
+                  borderRadius: '4px',
+                  transition: 'width 0.5s ease-out'
                 }}
               />
             </div>
