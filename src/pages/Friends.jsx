@@ -65,7 +65,7 @@ const Friends = () => {
             <input
               type="text"
               className="input-field"
-              placeholder="User ID (e.g. 2)"
+              placeholder="Username ..."
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               style={{ margin: 0, flex: 1 }}
