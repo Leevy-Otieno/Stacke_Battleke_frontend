@@ -5,7 +5,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import { PageLoader } from './components/UI';
 
-
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -17,6 +16,8 @@ const Friends = lazy(() => import('./pages/Friends'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Admin Pages
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminChallenges = lazy(() => import('./pages/admin/AdminChallenges'));
@@ -25,14 +26,11 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        {/* Suspense handles the loading state while the JS chunk is downloaded */}
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
-            {/* Student/User Protected Routes */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
             <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeDetail /></ProtectedRoute>} />
@@ -42,14 +40,15 @@ function App() {
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-            {/* Admin Protected Routes */}
+            {/* Admin Routes with Layout Wrapper */}
             <Route path="/admin" element={<AdminRoute />}>
-              <Route index element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-              <Route path="users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
-              <Route path="challenges" element={<ProtectedRoute><AdminChallenges /></ProtectedRoute>} />
+              <Route element={<AdminDashboard />}>
+                <Route index element={<div className="text-xl font-bold">Welcome Admin</div>} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="challenges" element={<AdminChallenges />} />
+              </Route>
             </Route>
 
-            {/* Catch All */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
