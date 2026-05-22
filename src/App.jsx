@@ -20,11 +20,12 @@ const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin Pages
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout')); // New Layout Wrapper
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminChallenges = lazy(() => import('./pages/admin/AdminChallenges'));
 const AdminSubmissions = lazy(() => import('./pages/admin/AdminSubmissions'));
+const AdminModeration = lazy(() => import('./pages/admin/AdminModeration'));
 
 function App() {
   return (
@@ -50,14 +51,15 @@ function App() {
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
             {/* Admin Protected Routes */}
+            {/* 1. AdminRoute checks if user is Admin, then renders the Outlet */}
+            {/* 2. AdminLayout renders the Sidebar + Child content */}
             <Route path="/admin" element={<AdminRoute />}>
-              <Route element={<AdminDashboard />}>
-                {/* These routes now live inside the AdminDashboard Layout */}
-                <Route index element={<AdminOverview />} />
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="challenges" element={<AdminChallenges />} />
                 <Route path="submissions" element={<AdminSubmissions />} />
-                <Route path="profile" element={<Profile />} /> 
+                <Route path="moderation" element={<AdminModeration />} />
               </Route>
             </Route>
 

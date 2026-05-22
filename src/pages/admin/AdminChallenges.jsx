@@ -1,110 +1,73 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import apiClient from '../../services/api';
-import { PageLoader, ErrorMessage, SuccessBanner, FormError } from '../../components/UI';
-import { Trash2, Plus, X, BookOpen } from 'lucide-react';
+// src/pages/admin/AdminChallenges.jsx
+import { useState } from 'react';
+import { Plus, Edit, Trash2, Search, Code } from 'lucide-react';
 
 const AdminChallenges = () => {
-  const [challenges, setChallenges] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('info'); 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [formError, setFormError] = useState('');
-
-  const [form, setForm] = useState({
-    title: '', slug: '', description: '', category: 'General', difficulty: 'Easy',
-    points_reward: 50, time_limit: 5000, memory_limit: 128,
-    starter_code_python: '', starter_code_javascript: '',
-    test_cases: []
-  });
-
-  const [testCase, setTestCase] = useState({ input_data: '', expected_output: '', is_hidden: false, points_value: 10 });
-
-  const fetchChallenges = useCallback(async () => {
-    try {
-      const res = await apiClient.get('/challenges');
-      setChallenges(res.data?.data || []);
-    } catch (e) { console.error("Error loading challenges", e); }
-  }, []);
-
-  useEffect(() => { fetchChallenges(); }, [fetchChallenges]);
-
-  // DELETE LOGIC
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this challenge?')) return;
-    
-    try {
-      await apiClient.delete(`/admin/challenges/${id}`);
-      setSuccess('Challenge deleted successfully.');
-      fetchChallenges(); // Refresh the list
-    } catch (e) {
-      alert("Failed to delete challenge.");
-    }
-  };
-
-  const addTestCase = () => {
-    setForm(prev => ({ ...prev, test_cases: [...prev.test_cases, { ...testCase }] }));
-    setTestCase({ input_data: '', expected_output: '', is_hidden: false, points_value: 10 });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setFormError('');
-    try {
-      await apiClient.post('/admin/challenges', {
-        ...form,
-        slug: form.slug || form.title.toLowerCase().replace(/ /g, '-')
-      });
-      setSuccess('Challenge created successfully!');
-      setShowModal(false);
-      fetchChallenges();
-    } catch (e) { setFormError(e.message); }
-    finally { setLoading(false); }
-  };
+  // Mock data - replace with your API call logic later
+  const [challenges, setChallenges] = useState([
+    { id: 1, title: 'Two Sum', difficulty: 'Easy', submissions: 142 },
+    { id: 2, title: 'Palindrome Check', difficulty: 'Medium', submissions: 89 },
+  ]);
 
   return (
-    <div style={{ maxWidth: '1000px' }}>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">Challenges</h1>
-          <p className="page-subtitle">Manage coding problems</p>
-        </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary" style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Plus size={16} /> New Challenge
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">Manage Challenges</h2>
+        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+          <Plus size={18} />
+          Add Challenge
         </button>
       </div>
 
-      {success && <SuccessBanner message={success} />}
-
-      <div className="grid gap-4 mt-6">
-        {challenges.map(c => (
-          <div key={c.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: '600' }}>{c.title}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.difficulty} · {c.points_reward} pts</div>
-            </div>
-            {/* DELETE BUTTON */}
-            <button 
-              onClick={() => handleDelete(c.id)} 
-              className="text-red-500 hover:text-red-400" 
-              style={{ background: 'none' }}
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
-        ))}
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+        <input 
+          type="text" 
+          placeholder="Search challenges..." 
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+        />
       </div>
 
-      {/* MODAL code remains the same as provided previously */}
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-          <div className="card" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
-            {/* ... Modal content remains identical to previous version ... */}
-          </div>
-        </div>
-      )}
+      {/* Challenges Table */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-4 font-semibold text-gray-700">Challenge Title</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Difficulty</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Submissions</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {challenges.map((challenge) => (
+              <tr key={challenge.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 font-medium text-gray-900 flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded">
+                    <Code size={16} />
+                  </div>
+                  {challenge.title}
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    challenge.difficulty === 'Easy' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {challenge.difficulty}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-gray-600">{challenge.submissions}</td>
+                <td className="px-6 py-4 flex gap-2">
+                  <button className="p-2 hover:bg-gray-200 rounded text-gray-600"><Edit size={18} /></button>
+                  <button className="p-2 hover:bg-red-100 rounded text-red-600"><Trash2 size={18} /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
+
 export default AdminChallenges;
