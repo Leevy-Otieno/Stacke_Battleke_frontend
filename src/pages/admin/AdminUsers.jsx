@@ -1,28 +1,28 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useAsync } from '../../hooks/useAsync';
+import { useDebounce } from '../../hooks/useDebounce';
 import { fetchAdminUsers, toggleUserBan } from '../../services/api';
 import { PageLoader, ErrorMessage, SuccessBanner, FormError } from '../../components/UI';
 import { Shield, ShieldOff, Search } from 'lucide-react';
 
 const AdminUsers = () => {
-  // Fetch users from the admin endpoint
   const fetcher = useCallback(() => fetchAdminUsers(), []);
   const { data: initialUsers, loading, error, refetch } = useAsync(fetcher);
   
-  // Local state for optimistic UI updates and search
   const [users, setUsers] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionError, setActionError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
   const [processingId, setProcessingId] = useState(null);
 
-  // Sync fetched data to local state
+  // 1. USE THE DEBOUNCE HOOK
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
   React.useEffect(() => {
     if (initialUsers) setUsers(initialUsers);
   }, [initialUsers]);
 
   const handleToggleBan = async (user) => {
-    // Prevent banning other admins
     if (user.role === 'admin') {
       setActionError("You cannot ban another administrator.");
       return;
@@ -34,12 +34,9 @@ const AdminUsers = () => {
 
     try {
       await toggleUserBan(user.id);
-      
-      // Optimistically update the UI so we don't have to refetch everything
       setUsers(prev => prev.map(u => 
         u.id === user.id ? { ...u, is_active: !u.is_active } : u
       ));
-      
       setActionSuccess(`User ${user.name} has been ${user.is_active ? 'banned' : 'reactivated'}.`);
     } catch (err) {
       setActionError(err.message);
@@ -48,35 +45,38 @@ const AdminUsers = () => {
     }
   };
 
+  // 2. FILTER USING THE DEBOUNCED VALUE (Optimized)
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    const query = debouncedSearch.toLowerCase();
+    return users.filter(u => 
+      u.name.toLowerCase().includes(query) || 
+      u.email.toLowerCase().includes(query)
+    );
+  }, [users, debouncedSearch]);
+
   if (loading) return <PageLoader />;
   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
 
-  // Filter users based on search
-  const filteredUsers = (users || []).filter(u => 
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <div className="max-w-[1000px] mx-auto">
+      {/* 3. TAILWIND REPLACES INLINE STYLES */}
+      <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="page-title">User Management</h1>
-          <p className="page-subtitle">Manage student accounts and permissions</p>
+          <h1 className="text-2xl font-semibold mb-2">User Management</h1>
+          <p className="text-text-muted text-sm">Manage student accounts and permissions</p>
         </div>
         
-        {/* Search Bar */}
-        <div style={{ position: 'relative', width: '300px' }}>
-          <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>
+        <div className="relative w-[300px]">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
             <Search size={16} />
           </div>
           <input
             type="text"
-            className="input-field"
+            className="input-field m-0 pl-10 bg-main border border-border rounded-md text-text-main w-full focus:border-primary"
             placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ margin: 0, paddingLeft: '2.5rem' }}
           />
         </div>
       </div>
@@ -84,67 +84,58 @@ const AdminUsers = () => {
       <FormError message={actionError} />
       <SuccessBanner message={actionSuccess} />
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <div className="card p-0 overflow-hidden bg-surface border border-border rounded-lg">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr style={{ backgroundColor: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)' }}>
-              <th style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>User</th>
-              <th style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Role</th>
-              <th style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Points</th>
-              <th style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Status</th>
-              <th style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', textAlign: 'right' }}>Actions</th>
+            <tr className="bg-main border-b border-border text-sm text-text-muted">
+              <th className="p-4">User</th>
+              <th className="p-4">Role</th>
+              <th className="p-4">Points</th>
+              <th className="p-4">Status</th>
+              <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.map((user) => (
-              <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }}>
+              <tr key={user.id} className="border-b border-border hover:bg-surface-hover transition-colors">
                 
-                {/* User Info */}
-                <td style={{ padding: '1rem 1.5rem' }}>
-                  <div style={{ fontWeight: '500' }}>{user.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.email}</div>
+                <td className="p-4">
+                  <div className="font-medium text-text-main">{user.name}</div>
+                  <div className="text-xs text-text-muted mt-1">{user.email}</div>
                 </td>
                 
-                {/* Role Badge */}
-                <td style={{ padding: '1rem 1.5rem' }}>
-                  <span className="badge" style={{ backgroundColor: user.role === 'admin' ? 'rgba(168, 85, 247, 0.1)' : 'var(--bg-main)', color: user.role === 'admin' ? '#A855F7' : 'var(--text-secondary)' }}>
+                <td className="p-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-purple-900/30 text-purple-400' : 'bg-main text-text-muted'}`}>
                     {user.role}
                   </span>
                 </td>
                 
-                {/* Points */}
-                <td style={{ padding: '1rem 1.5rem', fontWeight: '600' }}>
-                  {user.points}
+                <td className="p-4 font-semibold text-text-main">
+                  {user.points.toLocaleString()}
                 </td>
                 
-                {/* Status Badge */}
-                <td style={{ padding: '1rem 1.5rem' }}>
+                <td className="p-4">
                   {user.is_active ? (
-                    <span style={{ color: 'var(--primary-green)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span className="flex items-center gap-1 text-sm text-green-500">
                       <Shield size={14} /> Active
                     </span>
                   ) : (
-                    <span style={{ color: '#EF4444', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span className="flex items-center gap-1 text-sm text-red-500">
                       <ShieldOff size={14} /> Banned
                     </span>
                   )}
                 </td>
                 
-                {/* Actions */}
-                <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                <td className="p-4 text-right">
                   {user.role !== 'admin' && (
                     <button 
                       onClick={() => handleToggleBan(user)}
                       disabled={processingId === user.id}
-                      className="btn-primary" 
-                      style={{ 
-                        width: 'auto', 
-                        padding: '0.4rem 0.8rem', 
-                        fontSize: '0.75rem',
-                        backgroundColor: user.is_active ? 'transparent' : 'var(--primary-green)',
-                        border: user.is_active ? '1px solid #EF4444' : 'none',
-                        color: user.is_active ? '#EF4444' : '#000',
-                      }}
+                      className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                        user.is_active 
+                          ? 'border border-red-500 text-red-500 hover:bg-red-500/10' 
+                          : 'bg-green-500 text-black hover:bg-green-600'
+                      } disabled:opacity-50`}
                     >
                       {processingId === user.id ? 'Processing...' : (user.is_active ? 'Ban User' : 'Unban User')}
                     </button>
@@ -157,7 +148,7 @@ const AdminUsers = () => {
         </table>
         
         {filteredUsers.length === 0 && (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <div className="p-12 text-center text-text-muted">
             No users found matching "{searchQuery}".
           </div>
         )}

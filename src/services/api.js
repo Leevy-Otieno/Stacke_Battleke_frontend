@@ -9,17 +9,14 @@ const apiClient = axios.create({
   },
 });
 
+// REQUEST INTERCEPTOR: Attach the JWT token
 apiClient.interceptors.request.use((config) => {
   try {
     const rawUser = localStorage.getItem("sb_user");
 
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
-
-      const token =
-        parsed?.access_token ||
-        parsed?.token ||
-        parsed?.data?.token;
+      const token = parsed?.access_token || parsed?.token || parsed?.data?.token;
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -31,6 +28,19 @@ apiClient.interceptors.request.use((config) => {
 
   return config;
 });
+
+// RESPONSE INTERCEPTOR: Handle 401 Unauthorized globally
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Token is invalid/expired. Wipe storage and force redirect to login
+      localStorage.removeItem("sb_user");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 const handleError = (err) => {
   const message =
