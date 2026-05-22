@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Trophy, CheckCircle, Code, Save, X } from 'lucide-react';
+import { Trophy, CheckCircle, Code, Save, X, User } from 'lucide-react';
 import { FormError, SuccessBanner } from '../components/UI';
 
 const INSTITUTIONS = [
@@ -10,6 +10,7 @@ const INSTITUTIONS = [
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName]             = useState(user?.name || '');
@@ -46,8 +47,9 @@ const Profile = () => {
 
   return (
     <div style={{ maxWidth: '800px' }}>
+      {/* Header */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 className="page-title">My Profile</h1>
+        <h1 className="page-title">{isAdmin ? 'Admin Profile' : 'My Profile'}</h1>
         {!isEditing && (
           <button
             onClick={() => { setIsEditing(true); setSuccess(''); }}
@@ -61,8 +63,8 @@ const Profile = () => {
 
       {success && <SuccessBanner message={success} />}
 
+      {/* Main Profile Card */}
       <div className="card" style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', marginBottom: '1.5rem' }}>
-        {/* Avatar */}
         <div style={{
           width: '80px', height: '80px', borderRadius: '16px', flexShrink: 0,
           backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--primary-green)',
@@ -73,7 +75,7 @@ const Profile = () => {
         </div>
 
         {isEditing ? (
-          <div style={{ flex: 1, animation: 'fadeIn 0.2s ease-out' }}>
+          <div style={{ flex: 1 }}>
             <FormError message={formError} />
             {[
               { label: 'Full Name', value: name, set: setName, type: 'text' },
@@ -89,17 +91,22 @@ const Profile = () => {
                 />
               </div>
             ))}
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Institution</label>
-              <select
-                value={institution}
-                onChange={(e) => setInstitution(e.target.value)}
-                className="input-field"
-                style={{ margin: 0, padding: '0.5rem 1rem' }}
-              >
-                {INSTITUTIONS.map((i) => <option key={i}>{i}</option>)}
-              </select>
-            </div>
+            
+            {/* Institution select hidden for Admins */}
+            {!isAdmin && (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Institution</label>
+                <select
+                  value={institution}
+                  onChange={(e) => setInstitution(e.target.value)}
+                  className="input-field"
+                  style={{ margin: 0, padding: '0.5rem 1rem' }}
+                >
+                  {INSTITUTIONS.map((i) => <option key={i}>{i}</option>)}
+                </select>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button onClick={handleSave} className="btn-primary" disabled={saving} style={{ width: 'auto', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Save size={16} /> {saving ? 'Saving…' : 'Save Changes'}
@@ -114,27 +121,29 @@ const Profile = () => {
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{displayName}</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>{user?.email}</p>
             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', flexWrap: 'wrap' }}>
-              <span className="badge" style={{ backgroundColor: 'var(--bg-main)' }}>{user?.role || 'Beginner'}</span>
-              <span style={{ color: 'var(--text-secondary)' }}>{user?.institution || institution}</span>
+              <span className="badge" style={{ backgroundColor: 'var(--bg-main)' }}>{user?.role?.toUpperCase() || 'USER'}</span>
+              {!isAdmin && <span style={{ color: 'var(--text-secondary)' }}>{user?.institution || institution}</span>}
             </div>
           </div>
         )}
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
-        {[
-          { label: 'Points',      value: user?.points ?? 0,  icon: <Trophy size={24} color="#F59E0B" /> },
-          { label: 'Solved',      value: '0',                icon: <CheckCircle size={24} color="var(--primary-green)" /> },
-          { label: 'Submissions', value: '1',                icon: <Code size={24} color="#3B82F6" /> },
-        ].map(({ label, value, icon }) => (
-          <div key={label} className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>{icon}</div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{value}</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{label}</div>
-          </div>
-        ))}
-      </div>
+      {/* Stats Section: Only rendered if the user is NOT an admin */}
+      {!isAdmin && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+          {[
+            { label: 'Points',      value: user?.points ?? 0,  icon: <Trophy size={24} color="#F59E0B" /> },
+            { label: 'Solved',      value: '0',                icon: <CheckCircle size={24} color="var(--primary-green)" /> },
+            { label: 'Submissions', value: '1',                icon: <Code size={24} color="#3B82F6" /> },
+          ].map(({ label, value, icon }) => (
+            <div key={label} className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>{icon}</div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{value}</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
