@@ -6,6 +6,7 @@ import AdminRoute from './components/AdminRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import { PageLoader } from './components/UI';
 
+// Public & Student Pages
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -20,8 +21,10 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin Pages
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminChallenges = lazy(() => import('./pages/admin/AdminChallenges'));
+const AdminSubmissions = lazy(() => import('./pages/admin/AdminSubmissions'));
 
 function App() {
   return (
@@ -49,9 +52,11 @@ function App() {
             {/* Admin Protected Routes */}
             <Route path="/admin" element={<AdminRoute />}>
               <Route element={<AdminDashboard />}>
-                <Route index element={<div className="text-xl font-bold p-8">Welcome Admin Command Center</div>} />
+                {/* These routes now live inside the AdminDashboard Layout */}
+                <Route index element={<AdminOverview />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="challenges" element={<AdminChallenges />} />
+                <Route path="submissions" element={<AdminSubmissions />} />
                 <Route path="profile" element={<Profile />} /> 
               </Route>
             </Route>

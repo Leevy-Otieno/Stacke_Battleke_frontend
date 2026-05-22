@@ -1,54 +1,32 @@
-import React, { useState, useCallback } from 'react';
-import { useAsync } from '../../hooks/useAsync';
-import { fetchAdminUsers, toggleUserBan } from '../../services/api';
-import { PageLoader, ErrorMessage } from '../../components/UI';
+import React, { useState, useEffect } from 'react';
+import apiClient from '../../services/api';
 
 const AdminUsers = () => {
-  const { data: initialUsers, loading, error, refetch } = useAsync(fetchAdminUsers);
   const [users, setUsers] = useState([]);
 
-  React.useEffect(() => { if (initialUsers) setUsers(initialUsers); }, [initialUsers]);
+  useEffect(() => {
+    apiClient.get('/admin/users').then(res => setUsers(res.data));
+  }, []);
 
-  const handleToggle = async (user) => {
-    try {
-      await toggleUserBan(user.id);
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_active: !u.is_active } : u));
-    } catch (e) { alert(e.message); }
+  const handleUpdatePoints = async (id, currentPoints) => {
+    const val = prompt("Set new points:", currentPoints);
+    if (val) await apiClient.patch(`/admin/users/${id}/points`, { points: val });
   };
 
-  if (loading) return <PageLoader />;
-
   return (
-    <div>
-      <h1 className="page-title">Manage Users</h1>
-      {error && <ErrorMessage message={error} onRetry={refetch} />}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'var(--bg-surface)', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-              <th style={{ padding: '1rem' }}>Name</th>
-              <th style={{ padding: '1rem' }}>Role</th>
-              <th style={{ padding: '1rem' }}>Status</th>
-              <th style={{ padding: '1rem', textAlign: 'right' }}>Actions</th>
-            </tr>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Manage Users</h1>
+      <div className="bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
+        <table className="w-full text-left">
+          <thead className="bg-slate-800 text-xs uppercase text-slate-400">
+            <tr><th className="p-4">Name</th><th className="p-4">Points</th><th className="p-4">Action</th></tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-800">
             {users.map(u => (
-              <tr key={u.id} style={{ borderTop: '1px solid var(--border-color)' }}>
-                <td style={{ padding: '1rem' }}>{u.name}</td>
-                <td style={{ padding: '1rem' }}>{u.role}</td>
-                <td style={{ padding: '1rem' }}>
-                   <span style={{ color: u.is_active ? 'var(--primary-green)' : '#ef4444' }}>
-                     {u.is_active ? 'Active' : 'Banned'}
-                   </span>
-                </td>
-                <td style={{ padding: '1rem', textAlign: 'right' }}>
-                  {u.role !== 'admin' && (
-                    <button onClick={() => handleToggle(u)} style={{ background: 'none', color: 'var(--primary-green)', fontSize: '0.875rem' }}>
-                      {u.is_active ? 'Ban' : 'Unban'}
-                    </button>
-                  )}
-                </td>
+              <tr key={u.id}>
+                <td className="p-4">{u.name}</td>
+                <td className="p-4 font-bold">{u.points} <button onClick={() => handleUpdatePoints(u.id, u.points)} className="text-emerald-500 ml-2">✎</button></td>
+                <td className="p-4"><button className="text-red-400">Ban</button></td>
               </tr>
             ))}
           </tbody>

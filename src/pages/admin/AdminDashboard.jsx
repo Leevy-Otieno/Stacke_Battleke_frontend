@@ -1,61 +1,39 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Code, Zap, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, Users, Code, Activity, User, LogOut, Zap } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-
   const navItems = [
     { path: '/admin', label: 'Overview', icon: <LayoutDashboard size={20} /> },
     { path: '/admin/users', label: 'Manage Users', icon: <Users size={20} /> },
     { path: '/admin/challenges', label: 'Challenges', icon: <Code size={20} /> },
+    { path: '/admin/submissions', label: 'Submissions', icon: <Activity size={20} /> },
     { path: '/admin/profile', label: 'My Profile', icon: <User size={20} /> },
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-main)' }}>
-      {/* Sidebar: Styled exactly like your Navbar.jsx */}
-      <aside style={{ width: '260px', backgroundColor: 'var(--bg-main)', borderRight: '1px solid var(--border-color)', position: 'fixed', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '2rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 'bold', fontSize: '1.25rem' }}>
-          <div style={{ backgroundColor: 'var(--primary-green)', padding: '0.25rem', borderRadius: '6px', color: '#000' }}>
-            <Zap size={24} fill="currentColor" />
-          </div>
-          Admin Panel
+    <div className="flex min-h-screen bg-slate-950 text-slate-200">
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed h-full">
+        <div className="p-6 font-bold text-lg text-white flex items-center gap-2">
+            <Zap className="text-emerald-500" fill="currentColor" /> Admin Panel
         </div>
-
-        <nav style={{ flex: 1, padding: '0 1rem' }}>
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/admin'}
-              style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', borderRadius: '8px',
-                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                backgroundColor: isActive ? 'var(--bg-surface)' : 'transparent',
-                marginBottom: '0.25rem', transition: 'background 0.15s',
-              })}
-            >
-              {item.icon}
-              {item.label}
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map(item => (
+            <NavLink key={item.path} to={item.path} end={item.path === '/admin'}
+              className={({isActive}) => `flex items-center gap-3 px-4 py-3 rounded-lg ${isActive ? 'bg-emerald-600 text-white' : 'hover:bg-slate-800 text-slate-400'}`}>
+              {item.icon} {item.label}
             </NavLink>
           ))}
         </nav>
-
-        <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
-          <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)', background: 'none', border: 'none', width: '100%' }}>
-            <LogOut size={16} />
-            <span>Back to Dashboard</span>
-          </button>
-        </div>
+        <button onClick={() => navigate('/')} className="p-6 text-slate-500 hover:text-white flex items-center gap-2">
+           <LogOut size={16} /> Exit Admin
+        </button>
       </aside>
-
-      {/* Main Content Area */}
-      <main style={{ marginLeft: '260px', flex: 1, padding: '2rem' }}>
+      <main className="ml-64 flex-1 p-8">
         <Outlet />
       </main>
     </div>
   );
 };
-
 export default AdminDashboard;
