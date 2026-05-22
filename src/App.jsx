@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
-
+import AdminUsers from './pages/admin/AdminUsers';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
@@ -16,7 +16,6 @@ import Friends from './pages/Friends';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
-
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 function App() {
@@ -24,11 +23,9 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* Student/User Protected Routes */}
           <Route
             path="/"
             element={
@@ -101,9 +98,6 @@ function App() {
             }
           />
 
-          {/* ========================================== */}
-          {/* ADMIN PROTECTED ROUTES                       */}
-          {/* ========================================== */}
           <Route path="/admin" element={<AdminRoute />}>
             <Route
               index
@@ -113,10 +107,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Future Admin Routes like <AdminUsers /> will go here */}
+            <Route
+              path="users"
+              element={
+                <ProtectedRoute>
+                  <AdminUsers />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
-          {/* Catch All / 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
