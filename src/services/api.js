@@ -1,38 +1,36 @@
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL + "/api",
+  baseURL: `${BASE_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-apiClient.interceptors.request.use(
-  (config) => {
-    try {
-      const rawUser = localStorage.getItem("sb_user");
+apiClient.interceptors.request.use((config) => {
+  try {
+    const rawUser = localStorage.getItem("sb_user");
 
-      if (rawUser) {
-        const parsed = JSON.parse(rawUser);
+    if (rawUser) {
+      const parsed = JSON.parse(rawUser);
 
-        const token =
-          parsed?.access_token ||
-          parsed?.token ||
-          parsed?.data?.token;
+      const token =
+        parsed?.access_token ||
+        parsed?.token ||
+        parsed?.data?.token;
 
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
-    } catch (err) {
-      console.warn("Invalid auth storage - clearing");
-      localStorage.removeItem("sb_user");
     }
+  } catch {
+    localStorage.removeItem("sb_user");
+  }
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  return config;
+});
 
 const handleError = (err) => {
   const message =
@@ -106,15 +104,12 @@ export const apiUpdateProfile = async (updates) => {
 
 export const fetchChallenges = async (difficulty = "all") => {
   try {
-    const { data } = await apiClient.get("/challenges/", {
-      params: {
-        difficulty: difficulty !== "all" ? difficulty : undefined,
-      },
+    const { data } = await apiClient.get("/challenges", {
+      params: difficulty !== "all" ? { difficulty } : {},
     });
 
     return data?.data || [];
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 };
@@ -123,8 +118,7 @@ export const fetchChallenge = async (id) => {
   try {
     const { data } = await apiClient.get(`/challenges/${id}`);
     return data?.data || null;
-  } catch (err) {
-    console.log(err);
+  } catch {
     return null;
   }
 };
@@ -145,15 +139,14 @@ export const submitCode = async (challengeId, code, language) => {
 
 export const fetchLeaderboard = async (tab) => {
   try {
-    let path = "/leaderboard/";
+    let path = "/leaderboard";
 
     if (tab === "groups") path = "/leaderboard/groups";
     if (tab === "weekly") path = "/leaderboard/weekly/1";
 
-    const res = await apiClient.get(path);
-    return res?.data?.data || res?.data || [];
-  } catch (err) {
-    console.log(err);
+    const { data } = await apiClient.get(path);
+    return data?.data || [];
+  } catch {
     return [];
   }
 };
@@ -161,20 +154,15 @@ export const fetchLeaderboard = async (tab) => {
 export const fetchGroups = async () => {
   try {
     const { data } = await apiClient.get("/groups");
-    return data?.data || data || [];
-  } catch (err) {
-    console.log(err);
+    return data?.data || [];
+  } catch {
     return [];
   }
 };
 
-export const createGroup = async ({ name, description, isPublic = true }) => {
+export const createGroup = async (payload) => {
   try {
-    const { data } = await apiClient.post("/groups", {
-      name,
-      description,
-      isPublic,
-    });
+    const { data } = await apiClient.post("/groups", payload);
     return data;
   } catch (err) {
     handleError(err);
@@ -207,8 +195,7 @@ export const fetchFriends = async () => {
   try {
     const { data } = await apiClient.get("/friends");
     return data;
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 };
@@ -228,8 +215,7 @@ export const fetchNotifications = async () => {
   try {
     const { data } = await apiClient.get("/notifications");
     return data;
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 };
