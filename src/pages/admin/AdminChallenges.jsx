@@ -1,29 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../../services/api'; // Use your centralized client
+import apiClient from '../../services/api';
 
 const AdminChallenges = () => {
   const [challenges, setChallenges] = useState([]);
-  
-  const fetchChallenges = async () => {
-    try {
-      const res = await apiClient.get('/challenges'); // Using centralized client
-      setChallenges(res.data?.data || []);
-    } catch (e) { console.error(e); }
-  };
 
-  useEffect(() => { fetchChallenges(); }, []);
+  useEffect(() => {
+    const load = async () => {
+      const res = await apiClient.get('/challenges');
+      setChallenges(res.data?.data || []);
+    };
+    load();
+  }, []);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Challenges</h1>
-      <div className="grid gap-4">
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1 className="page-title">Challenges</h1>
+        <button className="btn-primary" style={{ width: 'auto' }}>+ Create Challenge</button>
+      </div>
+      
+      <div style={{ display: 'grid', gap: '1rem' }}>
         {challenges.map(c => (
-          <div key={c.id} className="bg-slate-900 p-4 rounded-lg border border-slate-800 flex justify-between items-center">
+          <div key={c.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h3 className="font-medium">{c.title}</h3>
-              <p className="text-xs text-slate-400">{c.difficulty}</p>
+              <div style={{ fontWeight: '600' }}>{c.title}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.difficulty}</div>
             </div>
-            <button className="text-red-400 hover:text-red-300 text-sm">Delete</button>
+            <button style={{ background: 'none', color: '#ef4444', fontSize: '0.875rem' }}>Delete</button>
           </div>
         ))}
       </div>
