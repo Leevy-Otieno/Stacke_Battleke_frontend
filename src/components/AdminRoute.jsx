@@ -1,30 +1,21 @@
-import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { ShieldAlert } from 'lucide-react';
 
 const AdminRoute = () => {
-  const { user } = useAuth();
+  // Grab the user from localStorage (or your AuthContext if you prefer)
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
 
+  // 1. Not logged in? Send to login.
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check the role we added to the database!
+  // 2. Logged in but NOT an admin? Send to student dashboard.
   if (user.role !== 'admin') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#EF4444' }}>
-        <ShieldAlert size={64} style={{ marginBottom: '1rem' }} />
-        <h2>Access Denied</h2>
-        <p>You do not have administrator privileges.</p>
-        <button onClick={() => window.location.href = '/'} className="btn-primary" style={{ width: 'auto', marginTop: '1rem' }}>
-          Return to Dashboard
-        </button>
-      </div>
-    );
+    return <Navigate to="/dashboard" replace />;
   }
 
-  // If they are an admin, render the nested admin routes
+  // 3. User is an admin? Render the nested admin components!
   return <Outlet />;
 };
 
