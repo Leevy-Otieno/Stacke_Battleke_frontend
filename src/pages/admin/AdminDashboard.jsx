@@ -5,11 +5,12 @@ import { LayoutDashboard, Users, Code, Zap, LogOut } from 'lucide-react';
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  const navItems = [
-    { path: '/admin', label: 'Overview', icon: <LayoutDashboard size={20} /> },
-    { path: '/admin/users', label: 'Manage Users', icon: <Users size={20} /> },
-    { path: '/admin/challenges', label: 'Challenges', icon: <Code size={20} /> },
-  ];
+ const navItems = [
+  { path: '/admin', label: 'Overview', icon: <LayoutDashboard size={20} /> },
+  { path: '/admin/users', label: 'Manage Users', icon: <Users size={20} /> },
+  { path: '/admin/challenges', label: 'Challenges', icon: <Code size={20} /> },
+  { path: '/admin/profile', label: 'My Profile', icon: <User size={20} /> }, // Add this
+];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-main)' }}>

@@ -56,6 +56,14 @@ function App() {
               </Route>
             </Route>
 
+            <Route element={<AdminDashboard />}>
+              <Route index element={<div className="p-8 text-xl font-bold">Welcome Admin</div>} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="challenges" element={<AdminChallenges />} />
+              {/* Add this line: */}
+              <Route path="profile" element={<Profile />} /> 
+            </Route>
+
             {/* Catch All */}
             <Route path="*" element={<NotFound />} />
           </Routes>
