@@ -1,13 +1,17 @@
-/* src/index.css */
+/* 1. Tailwind v4 import MUST be at the very top */
+@import "tailwindcss";
+
+/* 2. Then your font imports */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* 3. Finally, your custom CSS */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
+
 body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-/* Add your global styles here */
