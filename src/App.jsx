@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminChallenges from './pages/admin/AdminChallenges';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
@@ -112,6 +113,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminUsers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="challenges"
+              element={
+                <ProtectedRoute>
+                  <AdminChallenges />
                 </ProtectedRoute>
               }
             />

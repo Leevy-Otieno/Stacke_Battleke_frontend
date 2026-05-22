@@ -269,4 +269,13 @@ export const toggleUserBan = async (userId) => {
   }
 };
 
+export const deleteChallenge = async (challengeId) => {
+  try {
+    const { data } = await apiClient.delete(`/admin/challenges/${challengeId}`);
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export default apiClient;
