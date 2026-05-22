@@ -1,16 +1,16 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Code, Zap, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Code, Zap, LogOut, User } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
- const navItems = [
-  { path: '/admin', label: 'Overview', icon: <LayoutDashboard size={20} /> },
-  { path: '/admin/users', label: 'Manage Users', icon: <Users size={20} /> },
-  { path: '/admin/challenges', label: 'Challenges', icon: <Code size={20} /> },
-  { path: '/admin/profile', label: 'My Profile', icon: <User size={20} /> }, // Add this
-];
+  const navItems = [
+    { path: '/admin', label: 'Overview', icon: <LayoutDashboard size={20} /> },
+    { path: '/admin/users', label: 'Manage Users', icon: <Users size={20} /> },
+    { path: '/admin/challenges', label: 'Challenges', icon: <Code size={20} /> },
+    { path: '/admin/profile', label: 'My Profile', icon: <User size={20} /> },
+  ];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-main)' }}>
@@ -28,7 +28,7 @@ const AdminDashboard = () => {
             <NavLink
               key={item.path}
               to={item.path}
-              end
+              end={item.path === '/admin'}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', borderRadius: '8px',
                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',

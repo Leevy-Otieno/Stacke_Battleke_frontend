@@ -33,7 +33,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
-            {/* Root Redirector: Automatically sends Admin -> /admin, Student -> /dashboard */}
+            {/* Root Redirector */}
             <Route path="/" element={<RoleBasedRedirect />} />
 
             {/* Student/User Protected Routes */}
@@ -48,20 +48,12 @@ function App() {
 
             {/* Admin Protected Routes */}
             <Route path="/admin" element={<AdminRoute />}>
-              {/* AdminDashboard acts as the Layout shell for sidebar/nav */}
               <Route element={<AdminDashboard />}>
                 <Route index element={<div className="text-xl font-bold p-8">Welcome Admin Command Center</div>} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="challenges" element={<AdminChallenges />} />
+                <Route path="profile" element={<Profile />} /> 
               </Route>
-            </Route>
-
-            <Route element={<AdminDashboard />}>
-              <Route index element={<div className="p-8 text-xl font-bold">Welcome Admin</div>} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="challenges" element={<AdminChallenges />} />
-              {/* Add this line: */}
-              <Route path="profile" element={<Profile />} /> 
             </Route>
 
             {/* Catch All */}
