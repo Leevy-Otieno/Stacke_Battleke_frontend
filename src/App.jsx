@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
 import { PageLoader } from './components/UI';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -28,10 +29,15 @@ function App() {
       <Router>
         <Suspense fallback={<PageLoader />}>
           <Routes>
+            {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            {/* Root Redirector: Automatically sends Admin -> /admin, Student -> /dashboard */}
+            <Route path="/" element={<RoleBasedRedirect />} />
+
+            {/* Student/User Protected Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
             <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeDetail /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
@@ -40,15 +46,17 @@ function App() {
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-            {/* Admin Routes with Layout Wrapper */}
+            {/* Admin Protected Routes */}
             <Route path="/admin" element={<AdminRoute />}>
+              {/* AdminDashboard acts as the Layout shell for sidebar/nav */}
               <Route element={<AdminDashboard />}>
-                <Route index element={<div className="text-xl font-bold">Welcome Admin</div>} />
+                <Route index element={<div className="text-xl font-bold p-8">Welcome Admin Command Center</div>} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="challenges" element={<AdminChallenges />} />
               </Route>
             </Route>
 
+            {/* Catch All */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
