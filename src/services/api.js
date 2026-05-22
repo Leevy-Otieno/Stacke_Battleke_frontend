@@ -238,4 +238,35 @@ export const markAllNotificationsRead = async () => {
   }
 };
 
+// ==========================================
+// ADMIN ENDPOINTS
+// ==========================================
+
+export const fetchAdminStats = async () => {
+  try {
+    const { data } = await apiClient.get("/admin/stats");
+    return data?.data || null;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const fetchAdminUsers = async () => {
+  try {
+    const { data } = await apiClient.get("/admin/users");
+    return data?.data || [];
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const toggleUserBan = async (userId) => {
+  try {
+    const { data } = await apiClient.put(`/admin/users/${userId}/toggle-status`);
+    return data;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export default apiClient;
