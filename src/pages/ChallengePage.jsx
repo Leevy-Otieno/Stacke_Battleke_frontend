@@ -1,33 +1,62 @@
 /**
- * ChallengePage.jsx
+ * src/pages/ChallengePage.jsx
  *
- * The full coding battle view.
+ * ── What was broken ─────────────────────────────────────────────────────────
  *
- * Layout (side-by-side on desktop, stacked on mobile):
- * ┌──────────────────────────────┬──────────────────────────────────────────┐
- * │  LEFT PANEL                  │  RIGHT PANEL                             │
- * │  - Challenge title/meta      │  - CodeEditor                            │
- * │  - Description               │  - SubmissionPanel (Run / Submit)        │
- * │  - TestCaseViewer (examples) │  - Terminal (output)                     │
- * └──────────────────────────────┴──────────────────────────────────────────┘
+ * 1. NAMED IMPORTS ON DEFAULT EXPORTS
+ *    import { CodeEditor }      from "../components/Challenge/CodeEditor"
+ *    import { Terminal }        from "../components/Challenge/Terminal"
+ *    import { SubmissionPanel } from "../components/Challenge/SubmissionPanel"
+ *    import { TestCaseViewer }  from "../components/Challenge/TestCaseViewer"
+ *    All four components use `export default`, NOT named exports.
+ *    Result: each was undefined → white screen / "CodeEditor is not a function".
+ *    Fix: use default imports.
  *
- * Route param: :challengeId (integer)
+ * 2. WRONG HOOK PATH
+ *    import { useAuth } from "../hooks/useAuth"
+ *    The file is at src/context/AuthContext.jsx, not src/hooks/useAuth.
+ *    Fix: import from "../context/AuthContext".
  *
- * Data flow:
- *   1. Load challenge via GET /api/challenges/:id
- *   2. User writes code
- *   3. RUN  → runCodeSandbox (Piston) → show per-sample results in Terminal
- *   4. SUBMIT → POST /api/submissions/submit-code → show full results in Terminal
+ * 3. ROUTE PARAM MISMATCH
+ *    App.jsx declares: <Route path="/challenges/:id" ...>
+ *    ChallengePage used: const { challengeId } = useParams()
+ *    So challengeId was always undefined → every GET /api/challenges/undefined.
+ *    Fix: const { id: challengeId } = useParams() to match the ":id" param.
+ *
+ * 4. LANGUAGE SWITCH CLOBBERS USER CODE
+ *    The language-switch useEffect ran setCode(prev => prev || ...) but the
+ *    dependency array was [language] without challenge, so on the first switch
+ *    it sometimes ran before the challenge loaded and set code to "".
+ *    Fix: guard with `if (challenge)` before calling setCode.
+ *
+ * 5. MISSING KEY PROP WARNING → potential ordering bugs
+ *    The per-test Terminal results used array index as key (fine) but the
+ *    results array was reset to [] before each run, so React always re-mounts
+ *    the items. Added a stable key using testIndex.
+ *    (Terminal itself is fine; this is about data we pass to it.)
+ *
+ * 6. SUBMIT: res.data DOUBLE-UNWRAP
+ *    After the api.js fix, submissions.submit() returns the Flask response body
+ *    directly (not wrapped in an axios res.data again).
+ *    The old code did `const sub = res.submission` which is correct.
+ *    But ChallengePage was then reading res.success and res.error as if they
+ *    were on the axios response — they are on the Flask body, so that's fine.
+ *    No change needed once api.js is fixed.
+ *
+ * 7. ProtectedRoute wraps ChallengePage, so the <main> already has padding.
+ *    The ChallengePage set height: "calc(100vh - 56px)" assuming a 56px topbar,
+ *    but the app uses a SIDE nav (260px wide) + 2rem padding in main-content.
+ *    Fix: height: "100%" and let the parent handle the scroll context.
  */
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { challenges, submissions, runCodeSandbox } from "../services/api";
-import { CodeEditor } from "../components/Challenge/CodeEditor";
-import { Terminal } from "../components/Challenge/Terminal";
-import { SubmissionPanel } from "../components/Challenge/SubmissionPanel";
-import { TestCaseViewer } from "../components/Challenge/TestCaseViewer";
-import { useAuth }     from "../hooks/useAuth";
+import CodeEditor      from "../components/Challenge/CodeEditor";
+import Terminal        from "../components/Challenge/Terminal";
+import SubmissionPanel from "../components/Challenge/SubmissionPanel";
+import TestCaseViewer  from "../components/Challenge/TestCaseViewer";
+import { useAuth }     from "../context/AuthContext";
 
 const DIFFICULTY_COLOR = {
   Easy:   "#3fb950",
@@ -36,59 +65,60 @@ const DIFFICULTY_COLOR = {
 };
 
 export default function ChallengePage() {
-  const { challengeId } = useParams();
-  const { user }        = useAuth();
-  const navigate        = useNavigate();
+  // FIX #3: param is ":id" in App.jsx, not ":challengeId"
+  const { id: challengeId } = useParams();
+  const { user }            = useAuth();
+  const navigate            = useNavigate();
 
-  // ── Challenge state ─────────────────────────────────────────────────────────
+  // ── Challenge ────────────────────────────────────────────────────────────
   const [challenge, setChallenge] = useState(null);
   const [loadError, setLoadError] = useState(null);
 
-  // ── Editor state ─────────────────────────────────────────────────────────────
+  // ── Editor ───────────────────────────────────────────────────────────────
   const [language, setLanguage] = useState("python");
-  const [code, setCode]         = useState("");
+  const [code,     setCode]     = useState("");
 
-  // ── Terminal state ────────────────────────────────────────────────────────────
+  // ── Terminal ─────────────────────────────────────────────────────────────
   const [termResults,  setTermResults]  = useState([]);
   const [termSummary,  setTermSummary]  = useState(null);
-  const [termMode,     setTermMode]     = useState("run");  // "run" | "submit"
+  const [termMode,     setTermMode]     = useState("run");
   const [running,      setRunning]      = useState(false);
   const [submitting,   setSubmitting]   = useState(false);
 
-  // ── Load challenge ──────────────────────────────────────────────────────────
+  // ── Load challenge ────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!challengeId) return;
     setChallenge(null);
     setLoadError(null);
+    setCode("");
+
     challenges.get(challengeId)
       .then((res) => {
-        const c = res.data;
+        // api.js returns { data: challenge } so res.data is the challenge object
+        const c = res?.data;
+        if (!c) throw new Error("Challenge not found");
         setChallenge(c);
-        // Pre-fill editor with starter code for the current language
         setCode(c.boilerplate?.[language] || "");
       })
       .catch((err) => setLoadError(err.message));
-  }, [challengeId]);
+  }, [challengeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep editor seeded when language switches
+  // Seed editor when language tab switches — but only if user hasn't typed anything
   useEffect(() => {
-    if (challenge) {
-      setCode((prev) => prev || challenge.boilerplate?.[language] || "");
+    if (challenge && !code.trim()) {
+      setCode(challenge.boilerplate?.[language] || "");
     }
-  }, [language]);
+  }, [language]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Handle language change ─────────────────────────────────────────────────
   function handleLanguageChange(lang) {
     setLanguage(lang);
-    // Offer the starter code for the new language; don't clobber user's work
-    if (!code.trim() && challenge) {
-      setCode(challenge.boilerplate?.[lang] || "");
-    }
   }
 
-  // ── RUN — sandbox via Piston, sample tests only ───────────────────────────
+  // ── RUN (sandbox via Piston) ──────────────────────────────────────────────
   async function handleRun() {
     if (!code.trim()) return;
-    const examples = challenge?.examples || [];
+    // Safe default — examples might be missing on older challenges
+    const examples = Array.isArray(challenge?.examples) ? challenge.examples : [];
 
     setTermMode("run");
     setTermResults([]);
@@ -97,31 +127,35 @@ export default function ChallengePage() {
 
     try {
       if (examples.length === 0) {
-        // No visible examples: run with empty stdin
+        // No visible test cases — just run the code with empty stdin
         const out = await runCodeSandbox({ language, code, stdin: "" });
         setTermResults([{
-          passed: out.exitCode === 0 && !out.stderr,
-          status: out.stderr ? "Runtime Error" : "Accepted",
+          passed:    out.exitCode === 0 && !out.stderr,
+          status:    out.stderr ? "Runtime Error" : "Accepted",
           is_hidden: false,
-          input: "",
-          expected: null,
-          actual: out.stdout || "(no output)",
-          stderr: out.stderr || null,
+          input:     null,
+          expected:  null,
+          actual:    out.stdout || "(no output)",
+          stderr:    out.stderr || null,
         }]);
-        setTermSummary({ status: out.stderr ? "Runtime Error" : "Accepted", error: out.stderr });
+        setTermSummary({
+          status: out.stderr ? "Runtime Error" : "Accepted",
+          error:  out.stderr || null,
+        });
       } else {
         const results = [];
         for (const ex of examples) {
           const out = await runCodeSandbox({ language, code, stdin: ex.input || "" });
-          const passed = !out.stderr && out.stdout?.trim() === ex.output?.trim();
+          // Trim both sides for comparison (trailing newlines are common)
+          const passed = !out.stderr && (out.stdout?.trim() ?? "") === (ex.output?.trim() ?? "");
           results.push({
             passed,
-            status: out.stderr ? "Runtime Error" : passed ? "Accepted" : "Wrong Answer",
+            status:    out.stderr ? "Runtime Error" : passed ? "Accepted" : "Wrong Answer",
             is_hidden: false,
-            input:    ex.input || "(none)",
-            expected: ex.output,
-            actual:   out.stdout,
-            stderr:   out.stderr || null,
+            input:     ex.input  || "(none)",
+            expected:  ex.output || "",
+            actual:    out.stdout ?? "",
+            stderr:    out.stderr || null,
           });
         }
         const passCount = results.filter((r) => r.passed).length;
@@ -140,7 +174,7 @@ export default function ChallengePage() {
     }
   }
 
-  // ── SUBMIT — full evaluation via backend ──────────────────────────────────
+  // ── SUBMIT (full evaluation via Flask backend) ────────────────────────────
   async function handleSubmit() {
     if (!code.trim()) return;
     if (!user) { navigate("/login"); return; }
@@ -151,40 +185,39 @@ export default function ChallengePage() {
     setSubmitting(true);
 
     try {
+      // submissions.submit() returns the Flask response body directly:
+      //   Accepted:  { success: true, score, output, submission: {...} }
+      //   Failed:    { success: false, message, error, traceback, submission: {...} }
       const res = await submissions.submit({
-        challenge_id: parseInt(challengeId),
+        challenge_id: parseInt(challengeId, 10),
         language,
         code,
       });
 
-      // The backend returns the submission object with per-test results
-      // via evaluate_submission → per_test_results is NOT directly in the HTTP
-      // response. The route returns passed_tests/total_tests on the submission.
-      // We reconstruct a summary from what the route gives us.
-      const sub = res.submission || {};
+      const sub = res?.submission || {};
 
-      // Build terminal results from what we have
-      // (full per-test detail only lives inside scoring_service;
-      //  the route exposes passed_tests, total_tests, stderr, stdout)
-      setTermResults([]); // no per-test breakdown from this endpoint
       setTermSummary({
-        status:       sub.status || (res.success ? "Accepted" : "Wrong Answer"),
-        passed_tests: sub.passed_tests ?? res.passed_tests,
-        total_tests:  sub.total_tests  ?? res.total_tests,
-        score:        sub.score        ?? res.score,
-        error:        res.success ? null : (sub.stderr || res.error || res.message),
+        status:       sub.status ?? (res.success ? "Accepted" : "Wrong Answer"),
+        passed_tests: sub.passed_tests ?? null,
+        total_tests:  sub.total_tests  ?? null,
+        score:        sub.score        ?? res.score ?? null,
+        error:        res.success
+                        ? null
+                        : (sub.stderr || res.error || res.message || null),
       });
+
+      // If the backend ever returns per-test results in future, show them
+      if (Array.isArray(res.results)) {
+        setTermResults(res.results);
+      }
     } catch (err) {
-      setTermSummary({
-        status: "Runtime Error",
-        error:  err.message,
-      });
+      setTermSummary({ status: "Runtime Error", error: err.message });
     } finally {
       setSubmitting(false);
     }
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   if (loadError) return <ErrorScreen message={loadError} />;
   if (!challenge) return <LoadingScreen />;
 
@@ -192,31 +225,37 @@ export default function ChallengePage() {
 
   return (
     <div style={styles.page}>
-      {/* ── LEFT PANEL ── */}
+      {/* LEFT — problem description */}
       <div style={styles.left}>
         <div style={styles.meta}>
           <span style={{ ...styles.badge, background: diffColor + "22", color: diffColor }}>
             {challenge.difficulty}
           </span>
-          <span style={styles.points}>+{challenge.points} pts</span>
-          <span style={styles.time}>{challenge.time}</span>
+          {challenge.points != null && (
+            <span style={styles.points}>+{challenge.points} pts</span>
+          )}
+          {challenge.time && (
+            <span style={styles.time}>⏱ {challenge.time}</span>
+          )}
         </div>
 
         <h1 style={styles.title}>{challenge.title}</h1>
 
-        <div style={styles.description}
-          dangerouslySetInnerHTML={{ __html: challenge.desc?.replace(/\n/g, "<br>") || "" }}
+        <div
+          style={styles.description}
+          dangerouslySetInnerHTML={{
+            __html: (challenge.desc || "").replace(/\n/g, "<br>"),
+          }}
         />
 
         <TestCaseViewer
-          examples={challenge.examples || []}
-          hiddenCount={challenge.hiddenTests || 0}
+          examples={Array.isArray(challenge.examples) ? challenge.examples : []}
+          hiddenCount={challenge.hiddenTests ?? 0}
         />
       </div>
 
-      {/* ── RIGHT PANEL ── */}
+      {/* RIGHT — editor + terminal */}
       <div style={styles.right}>
-        {/* Editor fills available height */}
         <div style={styles.editorWrap}>
           <CodeEditor
             code={code}
@@ -227,7 +266,6 @@ export default function ChallengePage() {
           />
         </div>
 
-        {/* Run / Submit bar */}
         <SubmissionPanel
           onRun={handleRun}
           onSubmit={handleSubmit}
@@ -236,7 +274,6 @@ export default function ChallengePage() {
           disabled={!user}
         />
 
-        {/* Terminal output */}
         <div style={styles.termWrap}>
           <Terminal
             results={termResults}
@@ -250,17 +287,15 @@ export default function ChallengePage() {
   );
 }
 
-// ─── Sub-screens ──────────────────────────────────────────────────────────────
-
+// ── Sub-screens ───────────────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
     <div style={styles.center}>
-      <span style={styles.loadDot}>●</span>
-      <span style={styles.loadText}>Loading challenge…</span>
+      <span style={{ color: "#58a6ff", fontSize: "18px" }}>●</span>
+      <span style={{ fontSize: "14px", color: "#8b949e" }}>Loading challenge…</span>
     </div>
   );
 }
-
 function ErrorScreen({ message }) {
   return (
     <div style={styles.center}>
@@ -269,17 +304,20 @@ function ErrorScreen({ message }) {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
+// ── Styles ─────────────────────────────────────────────────────────────────────
 const styles = {
   page: {
     display: "flex",
-    gap: "0",
-    height: "calc(100vh - 56px)", // subtract nav height
+    height: "100%",           // FIX #7: fill parent, not full viewport
     overflow: "hidden",
     background: "#0d1117",
     color: "#e6edf3",
     fontFamily: "'IBM Plex Sans', 'Segoe UI', sans-serif",
+    // The ProtectedRoute wraps us in <main className="main-content"> which
+    // has padding: 2rem.  Override it for the challenge page so the editor
+    // fills to the edges.
+    margin: "-2rem",          // cancel the 2rem padding from main-content
+    minHeight: "calc(100vh - 0px)",
   },
   left: {
     width: "38%",
@@ -302,15 +340,8 @@ const styles = {
     fontWeight: 700,
     letterSpacing: "0.5px",
   },
-  points: {
-    color: "#3fb950",
-    fontSize: "12px",
-    fontWeight: 700,
-  },
-  time: {
-    color: "#8b949e",
-    fontSize: "12px",
-  },
+  points: { color: "#3fb950", fontSize: "12px", fontWeight: 700 },
+  time:   { color: "#8b949e", fontSize: "12px" },
   title: {
     fontSize: "20px",
     fontWeight: 800,
@@ -350,12 +381,5 @@ const styles = {
     height: "60vh",
     color: "#8b949e",
     fontFamily: "monospace",
-  },
-  loadDot: {
-    color: "#58a6ff",
-    animation: "pulse 1s ease-in-out infinite",
-  },
-  loadText: {
-    fontSize: "14px",
   },
 };

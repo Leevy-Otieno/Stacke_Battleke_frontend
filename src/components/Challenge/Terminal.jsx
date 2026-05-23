@@ -4,20 +4,19 @@
  * Displays code execution output in a terminal-style panel.
  *
  * Props:
- *   results  — array of per-test objects (from scoring_service / sandbox runner)
- *              each: { passed, status, is_hidden, expected, actual, input }
- *   summary  — { passed_tests, total_tests, score, status, error }
- *   loading  — bool
- *   mode     — "run" | "submit"
+ * results  — array of per-test objects
+ * summary  — { passed_tests, total_tests, score, status, error }
+ * loading  — bool
+ * mode     — "run" | "submit"
  */
 
 import { useEffect, useRef } from "react";
 
 const STATUS_ICON = {
-  Accepted:     "✅",
-  "Wrong Answer": "❌",
-  "Runtime Error": "💥",
-  Pending:      "⏳",
+  Accepted:     "✓",
+  "Wrong Answer": "✕",
+  "Runtime Error": "!",
+  Pending:      "...",
 };
 
 export default function Terminal({ results = [], summary = null, loading = false, mode = "run" }) {
@@ -31,9 +30,6 @@ export default function Terminal({ results = [], summary = null, loading = false
     <div style={styles.shell}>
       {/* Header bar */}
       <div style={styles.bar}>
-        <span style={styles.dot("#ff5f57")} />
-        <span style={styles.dot("#febc2e")} />
-        <span style={styles.dot("#28c840")} />
         <span style={styles.barLabel}>
           {mode === "submit" ? "SUBMISSION RESULTS" : "RUN OUTPUT"}
         </span>
@@ -66,16 +62,12 @@ export default function Terminal({ results = [], summary = null, loading = false
             <div style={styles.testHeader}>
               <span style={styles.testNum}>Test {i + 1}</span>
               <span style={styles.testStatus}>
-                {STATUS_ICON[r.status] || "?"} {r.status}
+                {STATUS_ICON[r.status] || ""} {r.status}
               </span>
             </div>
 
-            {/* Input — shown for run mode or visible tests */}
-            {r.input != null && (
-              <Row label="Input"    value={r.input} />
-            )}
+            {r.input != null && <Row label="Input" value={r.input} />}
 
-            {/* Expected / Actual — hidden for hidden test cases */}
             {r.is_hidden ? (
               <p style={styles.hiddenNote}>Hidden test case — output not shown.</p>
             ) : (
@@ -85,10 +77,7 @@ export default function Terminal({ results = [], summary = null, loading = false
               </>
             )}
 
-            {/* Stderr / error details */}
-            {r.stderr && (
-              <Row label="Error" value={r.stderr} error />
-            )}
+            {r.stderr && <Row label="Error" value={r.stderr} error />}
           </div>
         ))}
 
@@ -142,20 +131,12 @@ const styles = {
   bar: {
     display: "flex",
     alignItems: "center",
-    gap: "6px",
-    padding: "8px 14px",
+    padding: "10px 14px",
     background: "#161b22",
     borderBottom: "1px solid #30363d",
     flexShrink: 0,
   },
-  dot: (color) => ({
-    display: "inline-block",
-    width: 12, height: 12,
-    borderRadius: "50%",
-    background: color,
-  }),
   barLabel: {
-    marginLeft: "auto",
     color: "#8b949e",
     fontSize: "11px",
     letterSpacing: "1.5px",
@@ -199,33 +180,11 @@ const styles = {
     justifyContent: "space-between",
     marginBottom: "6px",
   },
-  testNum: {
-    color: "#e6edf3",
-    fontWeight: 700,
-  },
-  testStatus: {
-    color: "#8b949e",
-    fontSize: "12px",
-  },
-  hiddenNote: {
-    color: "#484f58",
-    fontStyle: "italic",
-    margin: "4px 0 0",
-    fontSize: "12px",
-  },
-  row: {
-    display: "flex",
-    gap: "10px",
-    alignItems: "flex-start",
-    marginTop: "4px",
-    flexWrap: "wrap",
-  },
-  rowLabel: {
-    minWidth: "68px",
-    fontWeight: 600,
-    fontSize: "12px",
-    paddingTop: "1px",
-  },
+  testNum: { color: "#e6edf3", fontWeight: 700 },
+  testStatus: { color: "#8b949e", fontSize: "12px" },
+  hiddenNote: { color: "#484f58", fontStyle: "italic", margin: "4px 0 0", fontSize: "12px" },
+  row: { display: "flex", gap: "10px", alignItems: "flex-start", marginTop: "4px" },
+  rowLabel: { minWidth: "68px", fontWeight: 600, fontSize: "12px", paddingTop: "1px" },
   rowValue: {
     background: "rgba(22,27,34,0.8)",
     padding: "2px 8px",
@@ -246,15 +205,8 @@ const styles = {
     flexWrap: "wrap",
     gap: "8px",
   }),
-  summaryScore: {
-    color: "#e6edf3",
-    fontWeight: 700,
-    fontSize: "15px",
-  },
-  summaryStatus: {
-    color: "#8b949e",
-    fontSize: "13px",
-  },
+  summaryScore: { color: "#e6edf3", fontWeight: 700, fontSize: "15px" },
+  summaryStatus: { color: "#8b949e", fontSize: "13px" },
   summaryError: {
     width: "100%",
     margin: "8px 0 0",
@@ -265,7 +217,6 @@ const styles = {
   },
 };
 
-// Inject keyframe animation for spinner
 if (typeof document !== "undefined") {
   const style = document.createElement("style");
   style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;

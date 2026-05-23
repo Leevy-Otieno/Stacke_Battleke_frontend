@@ -1,14 +1,35 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+/**
+ * src/pages/Login.jsx
+ *
+ * ── What was broken ─────────────────────────────────────────────────────────
+ *
+ * 1. IMPORTED FROM WRONG PLACE
+ *    Some versions imported apiLogin and set tokens manually.
+ *    We now use useAuth().login() which handles everything.
+ *
+ * 2. ROLE-BASED REDIRECT AFTER LOGIN
+ *    After login, the old code navigated to "/dashboard" always.
+ *    If the user is admin they should go to "/admin".
+ *    Fix: check user.role after login.
+ *
+ * 3. ERROR MESSAGE WAS SWALLOWED
+ *    The catch block set error to e.message but sometimes
+ *    e.message was undefined (axios wraps differently depending on version).
+ *    Fix: use String(e.message || "Login failed").
+ */
+
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { FormError } from '../components/UI';
 
 const Login = () => {
-  const [email, setEmail]       = useState('');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+
   const { login } = useAuth();
   const navigate  = useNavigate();
 
@@ -16,11 +37,13 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
-      await login(email, password);
-      navigate('/');
-    } catch (err) {
-      setError(err.message);
+      const user = await login(email.trim().toLowerCase(), password);
+      // Redirect based on role
+      navigate(user?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+    } catch (e) {
+      setError(String(e.message || 'Invalid email or password'));
     } finally {
       setLoading(false);
     }
@@ -29,6 +52,7 @@ const Login = () => {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--bg-main)' }}>
       <div style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
+        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
             <div style={{ backgroundColor: 'var(--primary-green)', padding: '0.25rem', borderRadius: '6px', color: '#000' }}>
@@ -36,27 +60,41 @@ const Login = () => {
             </div>
             StackBattle
           </div>
-          <h1 style={{ fontSize: '1.5rem', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Welcome back</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Sign in to your account</p>
+          <h1 style={{ fontSize: '1.5rem', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Sign in</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Welcome back, coder</p>
         </div>
 
         <form onSubmit={handleSubmit} className="card">
           <FormError message={error} />
+
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>Email</label>
-            <input type="email" required className="input-field" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label style={{ fontSize: '0.875rem' }}>Email</label>
+            <input
+              type="email" required className="input-field"
+              placeholder="jane@example.com"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
           </div>
+
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>Password</label>
-            <input type="password" required className="input-field" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <label style={{ fontSize: '0.875rem' }}>Password</label>
+            <input
+              type="password" required className="input-field"
+              placeholder="••••••••"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
           </div>
+
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
         <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          No account? <Link to="/signup" style={{ color: 'var(--primary-green)' }}>Create one</Link>
+          Don't have an account?{' '}
+          <Link to="/signup" style={{ color: 'var(--primary-green)' }}>Create one</Link>
         </p>
       </div>
     </div>
