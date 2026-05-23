@@ -1,46 +1,53 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+// src/context/AuthContext.jsx
+// Provides user auth state, login/signup/logout/updateProfile actions.
+// Added: `loading` boolean so AdminRoute can wait before redirecting.
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 import { apiLogin, apiSignup, apiUpdateProfile } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
+  // Initialise synchronously from localStorage
+  const [user, setUser]       = useState(null);
+  const [loading, setLoading] = useState(true); // true until hydration finishes
+
+  // Hydrate once on mount
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('sb_user');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) setUser(JSON.parse(saved));
     } catch {
-      return null;
+      localStorage.removeItem('sb_user');
+    } finally {
+      setLoading(false);
     }
-  });
+  }, []);
 
   const persist = (u) => {
     setUser(u);
     if (u) localStorage.setItem('sb_user', JSON.stringify(u));
-    else     localStorage.removeItem('sb_user');
+    else    localStorage.removeItem('sb_user');
   };
 
   const login = useCallback(async (email, password) => {
-    const data = await apiLogin(email, password); // throws on error
-    // Save both the user data and the JWT token
+    const data = await apiLogin(email, password);
     persist({ ...data.user, token: data.token });
   }, []);
 
   const signup = useCallback(async (name, email, password, institution) => {
     const data = await apiSignup(name, email, password, institution);
-    // Save both the user data and the JWT token
     persist({ ...data.user, token: data.token });
   }, []);
 
   const updateProfile = useCallback(async (updates) => {
     const data = await apiUpdateProfile({ ...user, ...updates });
-    // Ensure the token isn't lost when updating the profile
     persist({ ...data.user, token: user.token });
   }, [user]);
 
   const logout = useCallback(() => persist(null), []);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

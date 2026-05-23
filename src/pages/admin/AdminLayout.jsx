@@ -1,23 +1,25 @@
 // src/pages/admin/AdminLayout.jsx
+// Wraps all /admin/* pages with the fixed sidebar + scrollable main area.
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 
-const AdminLayout = () => {
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Fixed Sidebar */}
-      <AdminSidebar />
+const AdminLayout = () => (
+  <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-main)' }}>
+    <AdminSidebar />
 
-      {/* Main Content Area */}
-      {/* We add margin-left 64 to account for the fixed 64 (w-64) sidebar */}
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Outlet is where AdminDashboard, AdminUsers, etc. will render */}
-          <Outlet />
-        </div>
-      </main>
-    </div>
-  );
-};
+    {/* Content shifted right of the fixed 240px sidebar */}
+    <main style={{
+      flex: 1,
+      marginLeft: '240px',
+      padding: '2rem',
+      overflowY: 'auto',
+      minHeight: '100vh',
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <Outlet />
+      </div>
+    </main>
+  </div>
+);
 
 export default AdminLayout;

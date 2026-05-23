@@ -1,25 +1,32 @@
 // src/components/admin/AdminStatsCard.jsx
-import React from 'react';
-
-const AdminStatsCard = ({ title, value, icon, trend }) => {
-  return (
-    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">{value}</h3>
-        </div>
-        <div className="p-2 bg-gray-50 rounded-lg text-gray-600">
-          {icon}
-        </div>
+// Stat tile used on the admin dashboard.
+// Styled to match the app's dark design system instead of the old white Tailwind card.
+const AdminStatsCard = ({ title, value, icon, trend, trendNegative = false }) => (
+  <div style={{
+    backgroundColor: 'var(--bg-surface)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '10px', padding: '1.5rem',
+    display: 'flex', flexDirection: 'column', gap: '0.75rem',
+  }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <p style={{ fontSize: '0.8rem', fontWeight: '500', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        {title}
+      </p>
+      <div style={{ padding: '0.5rem', backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: '7px', color: '#10B981' }}>
+        {icon}
       </div>
-      {trend && (
-        <p className="text-sm mt-4 text-green-600 font-medium">
-          {trend}
-        </p>
-      )}
     </div>
-  );
-};
+
+    <h3 style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
+      {value ?? '—'}
+    </h3>
+
+    {trend && (
+      <p style={{ fontSize: '0.78rem', fontWeight: '500', color: trendNegative ? '#EF4444' : '#10B981' }}>
+        {trend}
+      </p>
+    )}
+  </div>
+);
 
 export default AdminStatsCard;
