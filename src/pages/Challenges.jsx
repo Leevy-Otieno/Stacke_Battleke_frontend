@@ -14,14 +14,21 @@ const Challenges = () => {
   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    // width: 100% ensures it pushes to the edges of your layout
+    <div style={{ width: '100%' }}>
       <div className="page-header" style={{ marginBottom: '2rem' }}>
         <h1 className="page-title">All Challenges</h1>
         <p className="page-subtitle">Test your skills, solve problems, and climb the leaderboard.</p>
       </div>
       
       {challengeList.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ 
+          display: 'grid', 
+          // auto-fit ensures the cards stretch to consume 100% of the available empty space
+          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
+          gap: '1.5rem',
+          width: '100%'
+        }}>
           {challengeList.map((challenge) => (
             <ChallengeCard key={challenge.id} challenge={challenge} />
           ))}

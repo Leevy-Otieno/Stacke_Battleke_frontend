@@ -6,7 +6,7 @@ import { useAsync } from '../hooks/useAsync';
 import { Search, Users } from 'lucide-react';
 
 const Groups = () => {
-  const [activeMenu, setActiveMenu]   = useState(null); // 'create' | 'join' | null
+  const [activeMenu, setActiveMenu]   = useState(null); 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [searching, setSearching]     = useState(false);
@@ -65,8 +65,8 @@ const Groups = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px' }}>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ width: '100%' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 className="page-title">Study Groups</h1>
           <p className="page-subtitle">Collaborate and compete together</p>
@@ -84,9 +84,8 @@ const Groups = () => {
       {success && <SuccessBanner message={success} />}
       {formError && <FormError message={formError} />}
 
-      {/* Join menu */}
       {activeMenu === 'join' && (
-        <div className="card" style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.2s ease-out' }}>
+        <div className="card" style={{ marginBottom: '2rem', animation: 'fadeIn 0.2s ease-out' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1rem' }}>Find a group</h3>
             <span onClick={() => setActiveMenu(null)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>✕</span>
@@ -113,14 +112,17 @@ const Groups = () => {
           {searchResults !== null && (
             searchResults.length === 0
               ? <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No groups found for "{searchQuery}".</p>
-              : searchResults.map((g) => <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />)
+              : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1rem' }}>
+                  {searchResults.map((g) => <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />)}
+                </div>
+              )
           )}
         </div>
       )}
 
-      {/* Create menu */}
       {activeMenu === 'create' && (
-        <div className="card" style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.2s ease-out' }}>
+        <div className="card" style={{ marginBottom: '2rem', animation: 'fadeIn 0.2s ease-out' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1rem' }}>Create a new group</h3>
             <span onClick={() => setActiveMenu(null)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>✕</span>
@@ -139,17 +141,28 @@ const Groups = () => {
         </div>
       )}
 
-      {error   && <ErrorMessage message={error} onRetry={refetch} />}
+      {error && <ErrorMessage message={error} onRetry={refetch} />}
       {loading && <PageLoader />}
+      
       {!loading && !error && groups?.length === 0 && (
-        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-          <Users size={40} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '4rem 2rem', backgroundColor: 'var(--bg-surface)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+          <Users size={40} style={{ opacity: 0.3, margin: '0 auto 1rem' }} />
           <p>No groups yet. Be the first to create one!</p>
         </div>
       )}
-      {!loading && !error && groups?.map((g) => (
-        <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />
-      ))}
+
+      {!loading && !error && groups?.length > 0 && (
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
+          gap: '1.5rem',
+          width: '100%'
+        }}>
+          {groups.map((g) => (
+            <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

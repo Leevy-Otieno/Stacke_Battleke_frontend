@@ -32,8 +32,8 @@ const Friends = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px' }}>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ width: '100%' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 className="page-title">Friends</h1>
           <p className="page-subtitle">{loading ? '…' : `${friends?.length ?? 0} friends`}</p>
@@ -55,7 +55,7 @@ const Friends = () => {
       {success && <SuccessBanner message={success} />}
 
       {showAddForm && (
-        <div className="card" style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.2s ease-out' }}>
+        <div className="card" style={{ marginBottom: '2rem', animation: 'fadeIn 0.2s ease-out' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '0.875rem', fontWeight: '600' }}>Send friend request by User ID</h3>
             <span onClick={() => setShowAddForm(false)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>✕</span>
@@ -82,6 +82,7 @@ const Friends = () => {
 
       {error   && <ErrorMessage message={error} />}
       {loading && <PageLoader />}
+      
       {!loading && !error && friends?.length === 0 && (
         <EmptyState
           icon={<UserPlus size={48} />}
@@ -89,17 +90,27 @@ const Friends = () => {
           subtitle="Send friend requests to connect with other coders"
         />
       )}
-      {!loading && !error && friends?.map((f) => (
-        <div key={f.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--bg-main)', color: 'var(--primary-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>
-            {f.name.charAt(0)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '500' }}>{f.name}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{f.role} · {f.points} pts</div>
-          </div>
+      
+      {!loading && !error && friends?.length > 0 && (
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+          gap: '1.25rem',
+          width: '100%'
+        }}>
+          {friends.map((f) => (
+            <div key={f.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--bg-main)', color: 'var(--primary-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', flexShrink: 0 }}>
+                {f.name.charAt(0)}
+              </div>
+              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.role} · {f.points} pts</div>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 };
