@@ -2,6 +2,13 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
 
+export const getToken = () => localStorage.getItem("sb_user") || localStorage.getItem("sb_token");
+export const setToken = (t) => localStorage.setItem("sb_token", t);
+export const clearToken = () => {
+  localStorage.removeItem("sb_user");
+  localStorage.removeItem("sb_token");
+};
+
 const apiClient = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: { "Content-Type": "application/json" },
@@ -10,13 +17,17 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   try {
     const rawUser = localStorage.getItem("sb_user");
+    const fallbackToken = localStorage.getItem("sb_token");
+    
+    let token = fallbackToken;
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
-      const token = parsed?.access_token || parsed?.token || parsed?.data?.token;
-      if (token) config.headers.Authorization = `Bearer ${token}`;
+      token = parsed?.access_token || parsed?.token || parsed?.data?.token || fallbackToken;
     }
+    
+    if (token) config.headers.Authorization = `Bearer ${token}`;
   } catch {
-    localStorage.removeItem("sb_user");
+    clearToken();
   }
   return config;
 });
@@ -25,7 +36,7 @@ apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("sb_user");
+      clearToken();
       window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -60,11 +71,14 @@ export const apiLogin = async (email, password) => {
   try {
     const { data } = await apiClient.post("/auth/login", { email, password });
     localStorage.setItem("sb_user", JSON.stringify(data));
+    if (data.access_token || data.token) {
+      setToken(data.access_token || data.token);
+    }
     return data;
   } catch (err) { handleError(err); }
 };
 
-export const apiLogout = () => localStorage.removeItem("sb_user");
+export const apiLogout = () => clearToken();
 
 export const apiGetMe = async () => {
   try {
@@ -78,6 +92,28 @@ export const apiUpdateProfile = async (updates) => {
     const { data } = await apiClient.put("/users/profile", updates);
     return data;
   } catch (err) { handleError(err); }
+};
+
+export const auth = {
+  register: async (payload) => {
+    const { data } = await apiClient.post("/auth/register", payload);
+    return data;
+  },
+  login: async (payload) => {
+    const { data } = await apiClient.post("/auth/login", payload);
+    localStorage.setItem("sb_user", JSON.stringify(data));
+    if (data.access_token || data.token) setToken(data.access_token || data.token);
+    return data;
+  },
+  me: async () => {
+    const { data } = await apiClient.get("/auth/me");
+    return data;
+  },
+  checkEmail: async (email) => {
+    const { data } = await apiClient.post("/auth/check-email", { email });
+    return data;
+  },
+  logout: () => clearToken()
 };
 
 export const fetchChallenges = async (difficulty = "all") => {
@@ -94,6 +130,30 @@ export const fetchChallenge = async (id) => {
     const { data } = await apiClient.get(`/challenges/${id}`);
     return data?.data || null;
   } catch { return null; }
+};
+
+export const runCodeSandbox = async (code, language, testCases = []) => {
+  const versionMap = { javascript: "18.15.0", python: "3.10.0" };
+  const langMap = { javascript: "js", python: "py" };
+
+  try {
+    const res = await axios.post("https://emkc.org/api/v2/piston/execute", {
+      language: language,
+      version: versionMap[language],
+      files: [{ name: `main.${langMap[language]}`, content: code }],
+      stdin: testCases.length > 0 ? (testCases[0].input || testCases[0].input_data || "") : "",
+    });
+    
+    return {
+      success: res.data.run.code === 0,
+      status: res.data.run.code === 0 ? "Finished" : "Runtime Error",
+      stdout: res.data.run.stdout,
+      stderr: res.data.run.stderr,
+      output: res.data.run.output
+    };
+  } catch (err) {
+    throw new Error("Sandbox execution failed. Please try again.");
+  }
 };
 
 export const submitCode = async (challengeId, code, language) => {

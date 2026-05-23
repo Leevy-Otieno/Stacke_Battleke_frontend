@@ -23,10 +23,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { challenges, submissions, runCodeSandbox } from "../services/api";
-import CodeEditor      from "../components/Challenge/CodeEditor";
-import Terminal        from "../components/Terminal";
-import SubmissionPanel from "../components/SubmissionPanel";
-import TestCaseViewer  from "../components/TestCaseViewer";
+import { CodeEditor } from "../components/Challenge/CodeEditor";
+import { Terminal } from "../components/Challenge/Terminal";
+import { SubmissionPanel } from "../components/Challenge/SubmissionPanel";
+import { TestCaseViewer } from "../components/Challenge/TestCaseViewer";
 import { useAuth }     from "../hooks/useAuth";
 
 const DIFFICULTY_COLOR = {
