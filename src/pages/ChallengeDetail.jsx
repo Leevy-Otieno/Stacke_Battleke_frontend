@@ -4,6 +4,7 @@ import { Play, Send, ChevronLeft, Terminal } from 'lucide-react';
 import { PageLoader, ErrorMessage } from '../components/UI';
 import { useAsync } from '../hooks/useAsync';
 import { fetchChallenge, submitCode } from '../services/api';
+import Editor from '@monaco-editor/react';
 
 const ChallengeWorkspace = () => {
   const { id } = useParams();
@@ -112,13 +113,23 @@ const ChallengeWorkspace = () => {
             </div>
           </div>
 
-          {/* Actual Editor Component */}
-          <div style={{ flex: 1, padding: '1rem' }}>
-            <textarea
+          {/* Actual Monaco Editor Component */}
+          <div style={{ flex: 1 }}>
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              style={{ width: '100%', height: '100%', border: 'none', backgroundColor: 'transparent', color: '#e6edf3', fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace', fontSize: '0.9375rem', outline: 'none', resize: 'none' }}
-              spellCheck="false"
+              onChange={(value) => setCode(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                wordWrap: "on",
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                padding: { top: 16 },
+                fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+              }}
             />
           </div>
         </div>
@@ -157,7 +168,7 @@ const ChallengeWorkspace = () => {
             )}
 
             {submitting && (
-              <div style={{ color: '#58a6ff' }}>Executing code on Piston sandbox...</div>
+              <div style={{ color: '#58a6ff' }}>Executing code on execution engine...</div>
             )}
 
             {/* Render Backend API Results */}
@@ -168,34 +179,44 @@ const ChallengeWorkspace = () => {
                 <div>
                   Status: <span style={{ 
                     fontWeight: 'bold', 
-                    color: result.status === 'Accepted' ? '#3fb950' : '#f85149' 
+                    color: result.status === 'Accepted' || result.success === true ? '#3fb950' : '#f85149' 
                   }}>
-                    {result.status}
+                    {result.status || (result.success ? 'Accepted' : 'Failed')}
                   </span>
                 </div>
                 
                 {/* Tests Passed / Score */}
                 <div style={{ color: '#c9d1d9' }}>
-                  Tests Passed: {result.passed_tests} / {result.total_tests}
+                  Tests Passed: {result.passed_tests || (result.success ? 'All' : 0)} / {result.total_tests || (result.success ? 'All' : '?')}
                   {result.score !== undefined && ` | Score: +${result.score}`}
                 </div>
 
                 {/* Standard Output (stdout) */}
-                {result.stdout && (
+                {(result.stdout || result.output) && (
                   <div>
                     <div style={{ color: '#8b949e', fontSize: '0.75rem', marginBottom: '0.25rem' }}>STDOUT:</div>
                     <div style={{ backgroundColor: '#161b22', padding: '0.75rem', borderRadius: '4px', color: '#e6edf3', whiteSpace: 'pre-wrap', border: '1px solid #30363d' }}>
-                      {result.stdout}
+                      {result.stdout || result.output}
                     </div>
                   </div>
                 )}
 
                 {/* Standard Error (stderr) */}
-                {result.stderr && (
+                {(result.stderr || result.error) && (
                   <div>
                     <div style={{ color: '#8b949e', fontSize: '0.75rem', marginBottom: '0.25rem' }}>STDERR:</div>
                     <div style={{ backgroundColor: 'rgba(248, 81, 73, 0.1)', padding: '0.75rem', borderRadius: '4px', color: '#f85149', whiteSpace: 'pre-wrap', border: '1px solid rgba(248, 81, 73, 0.4)' }}>
-                      {result.stderr}
+                      {result.stderr || result.error}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Traceback (if available) */}
+                {result.traceback && (
+                  <div>
+                    <div style={{ color: '#8b949e', fontSize: '0.75rem', marginBottom: '0.25rem' }}>TRACEBACK:</div>
+                    <div style={{ backgroundColor: 'rgba(248, 81, 73, 0.1)', padding: '0.75rem', borderRadius: '4px', color: '#f85149', whiteSpace: 'pre-wrap', border: '1px solid rgba(248, 81, 73, 0.4)' }}>
+                      {result.traceback}
                     </div>
                   </div>
                 )}
