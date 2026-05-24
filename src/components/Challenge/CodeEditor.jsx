@@ -1,19 +1,15 @@
+// CodeEditor.jsx
 import React, { useState } from "react";
 import Editor from "@monaco-editor/react";
 
 const LANGUAGES = [
-  { id: "python", label: " Python" },
-  { id: "javascript", label: " JavaScript" },
+  { id: "python", label: "Python" },
+  { id: "javascript", label: "JavaScript" },
 ];
 
 const DEFAULT_CODE = {
-  python: `def solution(n):
-    return n * 2
-`,
-  javascript: `function solution(n) {
-  return n * 2;
-}
-`,
+  python: `def solution(n):\n    return n * 2\n`,
+  javascript: `function solution(n) {\n  return n * 2;\n}\n`,
 };
 
 export default function CodeEditor({
@@ -21,6 +17,7 @@ export default function CodeEditor({
   onChange,
   language = "python",
   onLanguageChange,
+  starterCode = {},
   readOnly = false,
 }) {
   const [copied, setCopied] = useState(false);
@@ -32,12 +29,11 @@ export default function CodeEditor({
   }
 
   function handleReset() {
-    onChange(DEFAULT_CODE[language]);
+    onChange(starterCode[language] || DEFAULT_CODE[language]);
   }
 
   return (
     <div style={styles.wrapper}>
-      {/* TOP BAR */}
       <div style={styles.topbar}>
         <div style={styles.languages}>
           {LANGUAGES.map((lang) => (
@@ -46,14 +42,8 @@ export default function CodeEditor({
               onClick={() => onLanguageChange?.(lang.id)}
               style={{
                 ...styles.langBtn,
-                background:
-                  language === lang.id
-                    ? "#1f6feb"
-                    : "transparent",
-                color:
-                  language === lang.id
-                    ? "#fff"
-                    : "#8b949e",
+                background: language === lang.id ? "#1f6feb" : "transparent",
+                color: language === lang.id ? "#fff" : "#8b949e",
               }}
             >
               {lang.label}
@@ -72,7 +62,6 @@ export default function CodeEditor({
         </div>
       </div>
 
-      {/* MONACO EDITOR */}
       <div style={styles.editor}>
         <Editor
           height="100%"
@@ -91,13 +80,11 @@ export default function CodeEditor({
             tabSize: 2,
             insertSpaces: true,
             lineNumbers: "on",
-            roundedSelection: true,
             cursorSmoothCaretAnimation: true,
           }}
         />
       </div>
 
-      {/* FOOTER */}
       <div style={styles.footer}>
         <span>{language}</span>
         <span>{(code || "").split("\n").length} lines</span>
@@ -117,7 +104,6 @@ const styles = {
     borderRadius: "12px",
     overflow: "hidden",
   },
-
   topbar: {
     display: "flex",
     justifyContent: "space-between",
@@ -126,12 +112,10 @@ const styles = {
     background: "#161b22",
     borderBottom: "1px solid #30363d",
   },
-
   languages: {
     display: "flex",
     gap: "8px",
   },
-
   langBtn: {
     border: "none",
     padding: "7px 14px",
@@ -140,12 +124,10 @@ const styles = {
     fontWeight: 600,
     fontSize: "13px",
   },
-
   actions: {
     display: "flex",
     gap: "8px",
   },
-
   btn: {
     border: "1px solid #30363d",
     background: "#21262d",
@@ -156,12 +138,10 @@ const styles = {
     fontSize: "12px",
     fontWeight: 600,
   },
-
   editor: {
     flex: 1,
     width: "100%",
   },
-
   footer: {
     display: "flex",
     justifyContent: "space-between",

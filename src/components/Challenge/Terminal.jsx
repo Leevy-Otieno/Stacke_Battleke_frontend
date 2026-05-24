@@ -1,3 +1,4 @@
+// Terminal.jsx
 import { useEffect, useRef } from "react";
 
 const STATUS_ICON = {
@@ -9,27 +10,29 @@ const STATUS_ICON = {
 
 function highlightOutput(text) {
   if (text == null) return { __html: "" };
-  const str = String(text)
+  
+  const str = typeof text === "object" ? JSON.stringify(text) : String(text);
+
+  const highlighted = str
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  const highlighted = str.replace(
-    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[[\]{}])/g,
-    (match) => {
-      let color = "#cdd6f4";
-      if (/^"/.test(match)) {
-        color = /:$/.test(match) ? "#d2a8ff" : "#a5d6ff";
-      } else if (/true|false|null/.test(match)) {
-        color = "#ff7b72";
-      } else if (/^-?\d/.test(match)) {
-        color = "#79c0ff";
-      } else if (/^[\[\]{}]$/.test(match)) {
-        color = "#8b949e";
+    .replace(/>/g, "&gt;")
+    .replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[[\]{}])/g,
+      (match) => {
+        let color = "#cdd6f4";
+        if (/^"/.test(match)) {
+          color = /:$/.test(match) ? "#d2a8ff" : "#a5d6ff";
+        } else if (/true|false|null/.test(match)) {
+          color = "#ff7b72";
+        } else if (/^-?\d/.test(match)) {
+          color = "#79c0ff";
+        } else if (/^[\[\]{}]$/.test(match)) {
+          color = "#8b949e";
+        }
+        return `<span style="color: ${color}">${match}</span>`;
       }
-      return `<span style="color: ${color}">${match}</span>`;
-    }
-  );
+    );
 
   return { __html: highlighted };
 }
@@ -88,6 +91,7 @@ export default function Terminal({ results = [], summary = null, loading = false
                 </>
               )}
 
+              {r.stdout && <Row label="Stdout" value={r.stdout} />}
               {r.stderr && <Row label="Error" value={r.stderr} error isStderr />}
             </div>
           ))}
