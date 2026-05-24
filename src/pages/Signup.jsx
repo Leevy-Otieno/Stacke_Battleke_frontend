@@ -16,7 +16,9 @@ const Signup = () => {
   const [institution, setInstitution] = useState('');
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
-  const { signup } = useAuth();
+  
+  // FIX 1: Destructure 'register' from context instead of 'signup'
+  const { register } = useAuth(); 
   const navigate   = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -24,7 +26,8 @@ const Signup = () => {
     setError('');
     setLoading(true);
     try {
-      await signup(name, email, password, institution);
+      // FIX 2: Call register() and pass the state variables as a single object
+      await register({ name, email, password, institution });
       navigate('/');
     } catch (err) {
       setError(err.message);

@@ -43,6 +43,7 @@ const Login = () => {
       // Redirect based on role
       navigate(user?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     } catch (e) {
+      console.error("FULL LOGIN ERROR:", e);
       setError(String(e.message || 'Invalid email or password'));
     } finally {
       setLoading(false);

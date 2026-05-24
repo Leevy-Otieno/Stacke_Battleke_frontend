@@ -37,17 +37,18 @@ const Dashboard = () => {
     },
     {
       label: 'RANK TIER',
-      value: user?.role || user?.rank_tier || 'Beginner',
+      // FIX: Removed user?.role so it doesn't accidentally display "student"
+      value: user?.rank_tier || 'Beginner',
       icon: <Zap size={20} color="var(--primary-green)" />,
     },
     {
       label: 'SOLVED',
-      value: '0',
+      value: user?.solved_count ?? 0,
       icon: <CheckCircle size={20} color="var(--primary-green)" />,
     },
     {
       label: 'SUBMISSIONS',
-      value: '1',
+      value: user?.submissions_count ?? 0,
       icon: <Code size={20} color="#3B82F6" />,
     },
   ];
@@ -60,7 +61,8 @@ const Dashboard = () => {
   };
 
   const pts = user?.points ?? 0;
-  const currentRank = user?.role || user?.rank_tier || 'Beginner';
+  // FIX: Removed user?.role here too, so the progress bar calculates correctly
+  const currentRank = user?.rank_tier || 'Beginner';
   const nextThreshold = RANK_THRESHOLDS[currentRank] ?? 200;
 
   const progress = Math.min(
