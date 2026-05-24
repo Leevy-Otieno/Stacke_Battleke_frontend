@@ -1,23 +1,38 @@
-/**
- * Terminal.jsx
- *
- * Displays code execution output in a terminal-style panel.
- *
- * Props:
- * results  — array of per-test objects
- * summary  — { passed_tests, total_tests, score, status, error }
- * loading  — bool
- * mode     — "run" | "submit"
- */
-
 import { useEffect, useRef } from "react";
 
 const STATUS_ICON = {
-  Accepted:     "✓",
+  Accepted: "✓",
   "Wrong Answer": "✕",
   "Runtime Error": "!",
-  Pending:      "...",
+  Pending: "...",
 };
+
+function highlightOutput(text) {
+  if (text == null) return { __html: "" };
+  const str = String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const highlighted = str.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[[\]{}])/g,
+    (match) => {
+      let color = "#cdd6f4";
+      if (/^"/.test(match)) {
+        color = /:$/.test(match) ? "#d2a8ff" : "#a5d6ff";
+      } else if (/true|false|null/.test(match)) {
+        color = "#ff7b72";
+      } else if (/^-?\d/.test(match)) {
+        color = "#79c0ff";
+      } else if (/^[\[\]{}]$/.test(match)) {
+        color = "#8b949e";
+      }
+      return `<span style="color: ${color}">${match}</span>`;
+    }
+  );
+
+  return { __html: highlighted };
+}
 
 export default function Terminal({ results = [], summary = null, loading = false, mode = "run" }) {
   const bottomRef = useRef(null);
@@ -28,16 +43,13 @@ export default function Terminal({ results = [], summary = null, loading = false
 
   return (
     <div style={styles.shell}>
-      {/* Header bar */}
       <div style={styles.bar}>
         <span style={styles.barLabel}>
           {mode === "submit" ? "SUBMISSION RESULTS" : "RUN OUTPUT"}
         </span>
       </div>
 
-      {/* Body */}
       <div style={styles.body}>
-        {/* Idle state */}
         {!loading && results.length === 0 && !summary && (
           <p style={styles.idle}>
             {mode === "submit"
@@ -46,7 +58,6 @@ export default function Terminal({ results = [], summary = null, loading = false
           </p>
         )}
 
-        {/* Spinner */}
         {loading && (
           <div style={styles.spinnerWrap}>
             <span style={styles.spinner} />
@@ -56,32 +67,31 @@ export default function Terminal({ results = [], summary = null, loading = false
           </div>
         )}
 
-        {/* Per-test results */}
-        {!loading && results.map((r, i) => (
-          <div key={i} style={styles.testBlock(r.passed)}>
-            <div style={styles.testHeader}>
-              <span style={styles.testNum}>Test {i + 1}</span>
-              <span style={styles.testStatus}>
-                {STATUS_ICON[r.status] || ""} {r.status}
-              </span>
+        {!loading &&
+          results.map((r, i) => (
+            <div key={i} style={styles.testBlock(r.passed)}>
+              <div style={styles.testHeader}>
+                <span style={styles.testNum}>Test {i + 1}</span>
+                <span style={styles.testStatus}>
+                  {STATUS_ICON[r.status] || ""} {r.status}
+                </span>
+              </div>
+
+              {r.input != null && <Row label="Input" value={r.input} />}
+
+              {r.is_hidden ? (
+                <p style={styles.hiddenNote}>Hidden test case — output not shown.</p>
+              ) : (
+                <>
+                  {r.expected != null && <Row label="Expected" value={r.expected} accent />}
+                  {r.actual != null && <Row label="Got" value={r.actual} error={!r.passed} />}
+                </>
+              )}
+
+              {r.stderr && <Row label="Error" value={r.stderr} error isStderr />}
             </div>
+          ))}
 
-            {r.input != null && <Row label="Input" value={r.input} />}
-
-            {r.is_hidden ? (
-              <p style={styles.hiddenNote}>Hidden test case — output not shown.</p>
-            ) : (
-              <>
-                {r.expected != null && <Row label="Expected" value={r.expected} accent />}
-                {r.actual   != null && <Row label="Got"      value={r.actual}   error={!r.passed} />}
-              </>
-            )}
-
-            {r.stderr && <Row label="Error" value={r.stderr} error />}
-          </div>
-        ))}
-
-        {/* Summary banner */}
         {!loading && summary && (
           <div style={styles.summary(summary.status === "Accepted")}>
             <span style={styles.summaryScore}>
@@ -91,9 +101,7 @@ export default function Terminal({ results = [], summary = null, loading = false
             <span style={styles.summaryStatus}>
               {STATUS_ICON[summary.status] || ""} {summary.status}
             </span>
-            {summary.error && (
-              <pre style={styles.summaryError}>{summary.error}</pre>
-            )}
+            {summary.error && <pre style={styles.summaryError}>{summary.error}</pre>}
           </div>
         )}
 
@@ -103,17 +111,22 @@ export default function Terminal({ results = [], summary = null, loading = false
   );
 }
 
-function Row({ label, value, accent, error }) {
+function Row({ label, value, accent, error, isStderr }) {
   const color = error ? "#ff6b6b" : accent ? "#a8ff78" : "#cdd6f4";
   return (
     <div style={styles.row}>
       <span style={{ ...styles.rowLabel, color }}>{label}:</span>
-      <code style={{ ...styles.rowValue, color }}>{value}</code>
+      {isStderr ? (
+        <code style={{ ...styles.rowValue, color }}>{value}</code>
+      ) : (
+        <code
+          style={{ ...styles.rowValue, color: error ? color : undefined }}
+          dangerouslySetInnerHTML={highlightOutput(value)}
+        />
+      )}
     </div>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = {
   shell: {
@@ -161,7 +174,8 @@ const styles = {
   },
   spinner: {
     display: "inline-block",
-    width: 16, height: 16,
+    width: 16,
+    height: 16,
     border: "2px solid #30363d",
     borderTop: "2px solid #58a6ff",
     borderRadius: "50%",
@@ -182,9 +196,24 @@ const styles = {
   },
   testNum: { color: "#e6edf3", fontWeight: 700 },
   testStatus: { color: "#8b949e", fontSize: "12px" },
-  hiddenNote: { color: "#484f58", fontStyle: "italic", margin: "4px 0 0", fontSize: "12px" },
-  row: { display: "flex", gap: "10px", alignItems: "flex-start", marginTop: "4px" },
-  rowLabel: { minWidth: "68px", fontWeight: 600, fontSize: "12px", paddingTop: "1px" },
+  hiddenNote: {
+    color: "#484f58",
+    fontStyle: "italic",
+    margin: "4px 0 0",
+    fontSize: "12px",
+  },
+  row: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "flex-start",
+    marginTop: "4px",
+  },
+  rowLabel: {
+    minWidth: "68px",
+    fontWeight: 600,
+    fontSize: "12px",
+    paddingTop: "1px",
+  },
   rowValue: {
     background: "rgba(22,27,34,0.8)",
     padding: "2px 8px",
