@@ -1,6 +1,3 @@
-// src/pages/admin/AdminDashboard.jsx
-// Fetches real stats + recent users/submissions from the backend.
-// Falls back gracefully when data isn't available yet.
 import { useCallback } from 'react';
 import { Users, Code, FileText, Activity, TrendingUp } from 'lucide-react';
 import AdminStatsCard from '../../components/admin/AdminStatsCard';
@@ -8,7 +5,6 @@ import { PageLoader, ErrorMessage } from '../../components/UI';
 import { useAsync } from '../../hooks/useAsync';
 import { fetchAdminStats, fetchAdminUsers, fetchAdminSubmissions } from '../../services/api';
 
-// ---- Status Badge helper (reused inline) ----
 const StatusBadge = ({ status }) => {
   const isPass = status === 'Accepted' || status === 'Passed' || status === 'passed';
   return (
@@ -23,7 +19,6 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdminDashboard = () => {
-  // Fetch stats, recent users, and recent submissions in parallel
   const statsLoader    = useCallback(() => fetchAdminStats(), []);
   const usersLoader    = useCallback(() => fetchAdminUsers({ page: 1, perPage: 5 }), []);
   const subsLoader     = useCallback(() => fetchAdminSubmissions({ page: 1, perPage: 5 }), []);
@@ -44,23 +39,18 @@ const AdminDashboard = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Page title */}
       <div>
         <h1 style={{ fontSize: '1.4rem', fontWeight: '700', marginBottom: '0.25rem' }}>Dashboard</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Welcome back. Here's what's happening on StackBattle.</p>
       </div>
 
-      {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
         {statCards.map((card) => (
           <AdminStatsCard key={card.title} {...card} />
         ))}
       </div>
 
-      {/* Two-column section: recent users + recent submissions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-
-        {/* Recent Users */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
         <div style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ fontWeight: '600', fontSize: '0.95rem' }}>Recent Signups</h3>
@@ -88,7 +78,6 @@ const AdminDashboard = () => {
           )}
         </div>
 
-        {/* Recent Submissions */}
         <div style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ fontWeight: '600', fontSize: '0.95rem' }}>Recent Submissions</h3>
