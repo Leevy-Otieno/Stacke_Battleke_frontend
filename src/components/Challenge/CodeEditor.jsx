@@ -1,262 +1,310 @@
-import { useRef, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState } from "react";
+import Prism from "prismjs";
 
-const LANGUAGES = ["python", "javascript"];
+import "prismjs/themes/prism-tomorrow.css";
 
-const PLACEHOLDERS = {
-  python: `# Write your Python solution here\ndef solution(n):\n    pass\n`,
-  javascript: `// Write your JavaScript solution here\nfunction solution(n) {\n  \n}\n`,
-};
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-javascript";
 
-function highlightCode(code) {
-  if (!code) return "";
-  return code
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(
-      /("[^"]*"|'[^']*'|`[^`]*`|\b(function|def|class|return|if|else|elif|for|while|const|let|var|import|from|export|pass|true|false|null|undefined)\b|\b\d+\b|(\/\/.*|#.*))/g,
-      (match) => {
-        if (match.startsWith('"') || match.startsWith("'") || match.startsWith("`")) {
-          return `<span style="color: #a5d6ff">${match}</span>`;
-        }
-        if (match.startsWith("//") || match.startsWith("#")) {
-          return `<span style="color: #8b949e">${match}</span>`;
-        }
-        if (/^\d/.test(match)) {
-          return `<span style="color: #79c0ff">${match}</span>`;
-        }
-        return `<span style="color: #ff7b72">${match}</span>`;
-      }
-    );
+const LANGUAGES = [
+  {
+    id: "python",
+    label: "🐍 Python",
+  },
+  {
+    id: "javascript",
+    label: "⚡ JavaScript",
+  },
+];
+
+const DEFAULT_CODE = {
+  python: `def solution(n):
+    return n * 2
+`,
+  javascript: `function solution(n) {
+  return n * 2;
 }
+`,
+};
 
 export default function CodeEditor({
   code,
   onChange,
   language = "python",
   onLanguageChange,
-  starterCode = {},
   readOnly = false,
 }) {
   const textareaRef = useRef(null);
-  const preRef = useRef(null);
+  const codeRef = useRef(null);
+
   const [copied, setCopied] = useState(false);
 
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
-        const ta = e.target;
-        const start = ta.selectionStart;
-        const end = ta.selectionEnd;
-        const newVal = code.substring(0, start) + "  " + code.substring(end);
-        onChange(newVal);
-        requestAnimationFrame(() => {
-          ta.selectionStart = ta.selectionEnd = start + 2;
-        });
-      }
-    },
-    [code, onChange]
-  );
-
-  function handleCopy() {
-    navigator.clipboard.writeText(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }
-
-  function handleReset() {
-    const starter = starterCode[language] || PLACEHOLDERS[language];
-    onChange(starter);
-  }
+  useEffect(() => {
+    Prism.highlightElement(codeRef.current);
+  }, [code, language]);
 
   function handleScroll(e) {
-    if (preRef.current) {
-      preRef.current.scrollTop = e.target.scrollTop;
-      preRef.current.scrollLeft = e.target.scrollLeft;
+    const pre = codeRef.current.parentElement;
+
+    pre.scrollTop = e.target.scrollTop;
+    pre.scrollLeft = e.target.scrollLeft;
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Tab") {
+      e.preventDefault();
+
+      const textarea = textareaRef.current;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      const updated =
+        code.substring(0, start) +
+        "  " +
+        code.substring(end);
+
+      onChange(updated);
+
+      requestAnimationFrame(() => {
+        textarea.selectionStart =
+          textarea.selectionEnd =
+            start + 2;
+      });
     }
   }
 
-  const lineCount = (code || "").split("\n").length;
-  const lineNums = Array.from({ length: lineCount }, (_, i) => i + 1);
+  function handleCopy() {
+    navigator.clipboard.writeText(code);
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 1500);
+  }
+
+  function handleReset() {
+    onChange(DEFAULT_CODE[language]);
+  }
+
+  const lines = code.split("\n");
 
   return (
-    <div style={styles.root}>
-      <div style={styles.toolbar}>
-        <div style={styles.langTabs}>
+    <div style={styles.wrapper}>
+      <div style={styles.topbar}>
+        <div style={styles.languages}>
           {LANGUAGES.map((lang) => (
             <button
-              key={lang}
-              onClick={() => onLanguageChange?.(lang)}
-              disabled={readOnly}
-              style={styles.langTab(lang === language)}
+              key={lang.id}
+              onClick={() =>
+                onLanguageChange?.(lang.id)
+              }
+              style={{
+                ...styles.languageButton,
+                background:
+                  language === lang.id
+                    ? "#1f6feb"
+                    : "transparent",
+                color:
+                  language === lang.id
+                    ? "#ffffff"
+                    : "#8b949e",
+              }}
             >
-              {lang === "python" ? "🐍 Python" : "⚡ JavaScript"}
+              {lang.label}
             </button>
           ))}
         </div>
 
         <div style={styles.actions}>
-          <button onClick={handleCopy} style={styles.actionBtn}>
+          <button
+            style={styles.actionButton}
+            onClick={handleCopy}
+          >
             {copied ? "✓ Copied" : "Copy"}
           </button>
-          <button onClick={handleReset} style={styles.actionBtn} disabled={readOnly}>
+
+          <button
+            style={styles.actionButton}
+            onClick={handleReset}
+          >
             Reset
           </button>
         </div>
       </div>
 
-      <div style={styles.editorBody}>
-        <div style={styles.lineNums} aria-hidden>
-          {lineNums.map((n) => (
-            <div key={n} style={styles.lineNum}>
-              {n}
+      <div style={styles.editorContainer}>
+        <div style={styles.lineNumbers}>
+          {lines.map((_, index) => (
+            <div
+              key={index}
+              style={styles.lineNumber}
+            >
+              {index + 1}
             </div>
           ))}
         </div>
-        <div style={styles.editorContainer}>
-          <pre
-            ref={preRef}
-            style={styles.syntaxOverlay}
-            dangerouslySetInnerHTML={{ __html: highlightCode(code || "") }}
-            aria-hidden="true"
-          />
+
+        <div style={styles.editor}>
+          <pre style={styles.pre}>
+            <code
+              ref={codeRef}
+              className={`language-${language}`}
+            >
+              {code}
+            </code>
+          </pre>
+
           <textarea
             ref={textareaRef}
             value={code}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onChange={(e) =>
+              onChange(e.target.value)
+            }
             onScroll={handleScroll}
+            onKeyDown={handleKeyDown}
             spellCheck={false}
-            autoCapitalize="off"
             autoCorrect="off"
+            autoCapitalize="off"
             readOnly={readOnly}
-            placeholder={PLACEHOLDERS[language]}
             style={styles.textarea}
           />
         </div>
+      </div>
+
+      <div style={styles.footer}>
+        <span>{language}</span>
+
+        <span>
+          {lines.length} lines
+        </span>
       </div>
     </div>
   );
 }
 
-const sharedEditorStyles = {
-  margin: 0,
-  padding: "12px 14px",
-  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-  fontSize: "13px",
-  lineHeight: "1.6",
-  whiteSpace: "pre",
-  overflowWrap: "normal",
-  border: "none",
-  outline: "none",
-  tabSize: 2,
-};
-
 const styles = {
-  root: {
+  wrapper: {
     display: "flex",
     flexDirection: "column",
+    width: "100%",
+    height: "100%",
+    minHeight: "500px",
     background: "#0d1117",
     border: "1px solid #30363d",
-    borderRadius: "10px",
+    borderRadius: "12px",
     overflow: "hidden",
-    height: "100%",
-    minHeight: "320px",
-    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+    fontFamily:
+      "'JetBrains Mono', monospace",
   },
-  toolbar: {
+
+  topbar: {
     display: "flex",
-    alignItems: "center",
     justifyContent: "space-between",
-    padding: "6px 12px",
+    alignItems: "center",
+    padding: "10px 14px",
     background: "#161b22",
     borderBottom: "1px solid #30363d",
-    flexShrink: 0,
-    flexWrap: "wrap",
-    gap: "6px",
   },
-  langTabs: {
+
+  languages: {
     display: "flex",
-    gap: "4px",
+    gap: "8px",
   },
-  langTab: (active) => ({
-    padding: "4px 12px",
-    borderRadius: "6px",
+
+  languageButton: {
     border: "none",
+    padding: "7px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: "13px",
+  },
+
+  actions: {
+    display: "flex",
+    gap: "8px",
+  },
+
+  actionButton: {
+    border: "1px solid #30363d",
+    background: "#21262d",
+    color: "#e6edf3",
+    padding: "7px 14px",
+    borderRadius: "8px",
     cursor: "pointer",
     fontSize: "12px",
     fontWeight: 600,
-    fontFamily: "inherit",
-    background: active ? "#1f6feb" : "transparent",
-    color: active ? "#fff" : "#8b949e",
-    transition: "background 0.15s",
-  }),
-  actions: {
-    display: "flex",
-    gap: "6px",
   },
-  actionBtn: {
-    padding: "4px 10px",
-    borderRadius: "6px",
-    border: "1px solid #30363d",
-    background: "transparent",
-    color: "#8b949e",
-    fontSize: "11px",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    transition: "color 0.15s, border-color 0.15s",
-  },
-  editorBody: {
+
+  editorContainer: {
     display: "flex",
     flex: 1,
     overflow: "hidden",
   },
-  lineNums: {
-    padding: "12px 0",
-    minWidth: "42px",
-    background: "#0d1117",
-    borderRight: "1px solid #21262d",
-    textAlign: "right",
+
+  lineNumbers: {
+    width: "60px",
+    background: "#161b22",
+    borderRight: "1px solid #30363d",
+    paddingTop: "16px",
     userSelect: "none",
-    flexShrink: 0,
-    overflow: "hidden",
   },
-  lineNum: {
-    padding: "0 8px",
-    color: "#3d444d",
+
+  lineNumber: {
+    textAlign: "right",
+    paddingRight: "14px",
+    color: "#6e7681",
     fontSize: "13px",
-    lineHeight: "1.6",
+    lineHeight: "24px",
   },
-  editorContainer: {
+
+  editor: {
     position: "relative",
     flex: 1,
     overflow: "hidden",
-    background: "transparent",
   },
-  syntaxOverlay: {
-    ...sharedEditorStyles,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    color: "#e6edf3",
-    pointerEvents: "none",
-    overflow: "hidden",
-  },
-  textarea: {
-    ...sharedEditorStyles,
-    position: "absolute",
-    top: 0,
-    left: 0,
+
+  pre: {
+    margin: 0,
     width: "100%",
     height: "100%",
-    color: "transparent",
-    caretColor: "#e6edf3",
-    background: "transparent",
-    resize: "none",
     overflow: "auto",
+    padding: "16px",
+    background: "#0d1117",
+    fontSize: "14px",
+    lineHeight: "24px",
+  },
+
+  textarea: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    resize: "none",
+    border: "none",
+    outline: "none",
+    background: "transparent",
+    color: "transparent",
+    caretColor: "#ffffff",
+    padding: "16px",
+    fontSize: "14px",
+    lineHeight: "24px",
+    fontFamily:
+      "'JetBrains Mono', monospace",
+    overflow: "auto",
+    whiteSpace: "pre",
+  },
+
+  footer: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 14px",
+    background: "#161b22",
+    borderTop: "1px solid #30363d",
+    color: "#8b949e",
+    fontSize: "12px",
   },
 };
