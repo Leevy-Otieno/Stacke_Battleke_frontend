@@ -30,7 +30,6 @@ apiClient.interceptors.response.use(
   }
 );
 const handleError = (err) => {
-  // Add JSON.stringify right here so it prints as pure text!
   console.error("🚨 REAL BACKEND ERROR:", JSON.stringify(err?.response?.data));
   
   const msg =
@@ -238,10 +237,10 @@ export const createGroup = async (p) => {
   }
 };
 
-export const joinGroup = async (c) => {
+export const joinGroup = async (groupId) => {
   try {
     const { data } = await apiClient.post("/groups/join", {
-      invite_code: c,
+      group_id: groupId,
     });
     return data;
   } catch (err) {
