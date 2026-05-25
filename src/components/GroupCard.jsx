@@ -1,7 +1,7 @@
 import React from 'react';
 import { Users, Lock } from 'lucide-react';
 
-const GroupCard = ({ group, onJoin, joining }) => (
+const GroupCard = ({ group, onJoin, joining, requested }) => (
   <div style={{
     backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)',
     borderRadius: '8px', padding: '1rem 1.25rem', marginBottom: '1rem',
@@ -30,11 +30,11 @@ const GroupCard = ({ group, onJoin, joining }) => (
     {onJoin && (
       <button
         onClick={() => onJoin(group.id)}
-        disabled={joining === group.id}
+        disabled={joining === group.id || requested}
         className="btn-primary"
-        style={{ width: 'auto', padding: '0.4rem 1rem', fontSize: '0.875rem', opacity: joining === group.id ? 0.6 : 1 }}
+        style={{ width: 'auto', padding: '0.4rem 1rem', fontSize: '0.875rem', opacity: (joining === group.id || requested) ? 0.6 : 1 }}
       >
-        {joining === group.id ? 'Joining…' : 'Join'}
+        {joining === group.id ? 'Sending…' : requested ? 'Request Sent' : 'Join'}
       </button>
     )}
   </div>
