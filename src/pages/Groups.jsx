@@ -44,10 +44,10 @@ const Groups = () => {
   const handleJoin = async (id) => {
     setJoining(id);
     setFormError('');
+    setSuccess('');
     try {
-      await joinGroup(id);
-      setSuccess('You have joined the group!');
-      refetch();
+      const res = await joinGroup(id);
+      setSuccess(res?.message || 'Join request sent to the group creator!');
     } catch (e) { setFormError(e.message); }
     finally { setJoining(null); }
   };
