@@ -1,4 +1,3 @@
-// api.js
 import axios from "axios";
 
 export const getToken = () => localStorage.getItem("sb_token");
@@ -32,6 +31,8 @@ apiClient.interceptors.response.use(
 );
 
 const handleError = (err) => {
+  console.error("🚨 REAL BACKEND ERROR:", err?.response?.data);
+  
   const msg =
     err?.response?.data?.error ||
     err?.response?.data?.message ||
