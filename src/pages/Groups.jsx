@@ -16,6 +16,9 @@ const Groups = () => {
   const [groupName, setGroupName]     = useState('');
   const [groupDesc, setGroupDesc]     = useState('');
   const [creating, setCreating]       = useState(false);
+  
+  // NEW: State to track which groups we have already requested to join
+  const [requestedGroups, setRequestedGroups] = useState(new Set());
 
   const fetcher = useCallback(() => fetchGroups(), []);
   const { data: groups, loading, error, refetch } = useAsync(fetcher);
@@ -48,6 +51,15 @@ const Groups = () => {
     try {
       const res = await joinGroup(id);
       setSuccess(res?.message || 'Join request sent to the group creator!');
+      
+      // NEW: Mark this specific group as "requested"
+      setRequestedGroups(prev => new Set(prev).add(id));
+
+      // NEW: Automatically hide the success banner after 4 seconds
+      setTimeout(() => {
+        setSuccess('');
+      }, 4000);
+
     } catch (e) { setFormError(e.message); }
     finally { setJoining(null); }
   };
@@ -60,6 +72,9 @@ const Groups = () => {
       setSuccess(`Group "${newGroup.name}" created!`);
       setActiveMenu(null);
       refetch();
+      
+      // Auto-hide create success message too
+      setTimeout(() => setSuccess(''), 4000);
     } catch (e) { setFormError(e.message); }
     finally { setCreating(false); }
   };
@@ -114,7 +129,15 @@ const Groups = () => {
               ? <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No groups found for "{searchQuery}".</p>
               : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1rem' }}>
-                  {searchResults.map((g) => <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />)}
+                  {searchResults.map((g) => (
+                    <GroupCard 
+                      key={g.id} 
+                      group={g} 
+                      onJoin={handleJoin} 
+                      joining={joining}
+                      requested={requestedGroups.has(g.id)} 
+                    />
+                  ))}
                 </div>
               )
           )}
@@ -159,7 +182,13 @@ const Groups = () => {
           width: '100%'
         }}>
           {groups.map((g) => (
-            <GroupCard key={g.id} group={g} onJoin={handleJoin} joining={joining} />
+            <GroupCard 
+              key={g.id} 
+              group={g} 
+              onJoin={handleJoin} 
+              joining={joining} 
+              requested={requestedGroups.has(g.id)} 
+            />
           ))}
         </div>
       )}
