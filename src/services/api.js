@@ -29,9 +29,9 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 const handleError = (err) => {
-  console.error("🚨 REAL BACKEND ERROR:", err?.response?.data);
+  // Add JSON.stringify right here so it prints as pure text!
+  console.error("🚨 REAL BACKEND ERROR:", JSON.stringify(err?.response?.data));
   
   const msg =
     err?.response?.data?.error ||
