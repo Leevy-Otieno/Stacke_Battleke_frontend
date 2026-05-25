@@ -30,7 +30,7 @@ apiClient.interceptors.response.use(
   }
 );
 const handleError = (err) => {
-  console.error("🚨 REAL BACKEND ERROR:", JSON.stringify(err?.response?.data));
+  console.error(" BACKEND ERROR:", JSON.stringify(err?.response?.data));
   
   const msg =
     err?.response?.data?.error ||
