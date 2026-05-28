@@ -1,14 +1,7 @@
-// src/components/Toast.jsx
-// Simple ephemeral toast used throughout the admin panel.
-// Usage:
-//   const [toast, setToast] = useState(null);
-//   setToast({ type: 'success' | 'error', message: '...' });
-//   <Toast toast={toast} onClose={() => setToast(null)} />
 import { useEffect } from 'react';
 import { CheckCircle, XCircle, X } from 'lucide-react';
 
 const Toast = ({ toast, onClose }) => {
-  // Auto-dismiss after 3.5 seconds
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(onClose, 3500);

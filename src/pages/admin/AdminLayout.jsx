@@ -1,5 +1,4 @@
-// src/pages/admin/AdminLayout.jsx
-// Wraps all /admin/* pages with the fixed sidebar + scrollable main area.
+
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 

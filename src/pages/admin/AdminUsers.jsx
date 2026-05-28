@@ -1,11 +1,4 @@
-// src/pages/admin/AdminUsers.jsx
-// Full user management table with:
-// - Real-time search (debounced)
-// - Role filter
-// - Promote / Demote admin
-// - Ban / Unban
-// - Delete (with confirmation modal)
-// - Pagination
+
 import { useState, useCallback, useEffect } from 'react';
 import { Search, Shield, Ban, Trash2, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react';
 import { PageLoader, ErrorMessage } from '../../components/UI';
@@ -17,7 +10,6 @@ import {
   fetchAdminUsers, updateUserRole, toggleUserBan, adminDeleteUser,
 } from '../../services/api';
 
-// Role badge colour helper
 const roleBadge = (role) => ({
   admin:   { bg: 'rgba(59,130,246,0.12)', color: '#60A5FA' },
   student: { bg: 'rgba(148,163,184,0.1)', color: '#94A3B8' },

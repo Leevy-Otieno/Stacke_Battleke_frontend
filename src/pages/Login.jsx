@@ -1,22 +1,3 @@
-/**
- * src/pages/Login.jsx
- *
- * ── What was broken ─────────────────────────────────────────────────────────
- *
- * 1. IMPORTED FROM WRONG PLACE
- *    Some versions imported apiLogin and set tokens manually.
- *    We now use useAuth().login() which handles everything.
- *
- * 2. ROLE-BASED REDIRECT AFTER LOGIN
- *    After login, the old code navigated to "/dashboard" always.
- *    If the user is admin they should go to "/admin".
- *    Fix: check user.role after login.
- *
- * 3. ERROR MESSAGE WAS SWALLOWED
- *    The catch block set error to e.message but sometimes
- *    e.message was undefined (axios wraps differently depending on version).
- *    Fix: use String(e.message || "Login failed").
- */
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';

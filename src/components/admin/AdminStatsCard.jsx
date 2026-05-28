@@ -1,6 +1,3 @@
-// src/components/admin/AdminStatsCard.jsx
-// Stat tile used on the admin dashboard.
-// Styled to match the app's dark design system instead of the old white Tailwind card.
 const AdminStatsCard = ({ title, value, icon, trend, trendNegative = false }) => (
   <div style={{
     backgroundColor: 'var(--bg-surface)',

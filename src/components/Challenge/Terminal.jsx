@@ -1,4 +1,3 @@
-// Terminal.jsx
 import { useEffect, useRef } from "react";
 
 const STATUS_ICON = {

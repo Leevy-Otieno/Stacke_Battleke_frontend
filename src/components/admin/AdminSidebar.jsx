@@ -1,6 +1,3 @@
-// src/components/admin/AdminSidebar.jsx
-// Fixed left sidebar for the admin panel.
-// Wired to real logout via AuthContext.
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Code, FileText, ShieldAlert, LogOut, Zap, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';

@@ -17,7 +17,6 @@ const Groups = () => {
   const [groupDesc, setGroupDesc]     = useState('');
   const [creating, setCreating]       = useState(false);
   
-  // NEW: State to track which groups we have already requested to join
   const [requestedGroups, setRequestedGroups] = useState(new Set());
 
   const fetcher = useCallback(() => fetchGroups(), []);

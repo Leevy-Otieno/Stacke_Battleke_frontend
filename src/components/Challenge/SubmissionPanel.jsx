@@ -1,17 +1,3 @@
-/**
- * SubmissionPanel.jsx
- *
- * The action bar shown below / beside the code editor.
- * Contains RUN (sandbox, no DB write) and SUBMIT (full evaluation + DB) buttons.
- *
- * Props:
- *   onRun    async fn()
- *   onSubmit async fn()
- *   running  bool  — RUN in progress
- *   submitting bool — SUBMIT in progress
- *   disabled bool  — true while auth is loading etc.
- */
-
 export default function SubmissionPanel({
   onRun,
   onSubmit,

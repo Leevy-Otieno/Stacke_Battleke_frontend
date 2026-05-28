@@ -1,6 +1,4 @@
-// src/pages/admin/ChallengeForm.jsx
-// Reusable form used for both creating and editing challenges.
-// Supports title, description, difficulty, points, published flag, and test cases.
+
 import { useState } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { FormError } from '../../components/UI';

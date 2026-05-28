@@ -1,10 +1,4 @@
-// src/pages/admin/AdminChallenges.jsx
-// Full challenge management with:
-// - Create / Edit inline modal
-// - Delete with confirmation
-// - Publish / Unpublish toggle
-// - Search + difficulty filter
-// - Pagination
+
 import { useState, useCallback, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, EyeOff, Search, Code } from 'lucide-react';
 import { PageLoader, ErrorMessage } from '../../components/UI';
@@ -30,7 +24,7 @@ const AdminChallenges = () => {
   const [diffFilter, setDiff]     = useState('all');
   const [page, setPage]           = useState(1);
   const [toast, setToast]         = useState(null);
-  const [modal, setModal]         = useState(null); // { type: 'create'|'edit'|'delete', challenge? }
+  const [modal, setModal]         = useState(null);
   const [saving, setSaving]       = useState(false);
 
   const debouncedSearch = useDebounce(search, 350);

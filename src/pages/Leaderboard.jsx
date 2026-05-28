@@ -13,12 +13,9 @@ const TABS = [
 
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState('global');
-
-  // ✅ REAL backend-driven fetch
   const fetcher = useCallback(async () => {
     const res = await fetchLeaderboard(activeTab);
 
-    // backend MUST always return { data: [...] }
     return res.data;
   }, [activeTab]);
 

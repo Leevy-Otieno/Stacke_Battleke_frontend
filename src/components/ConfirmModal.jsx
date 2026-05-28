@@ -1,10 +1,8 @@
-// src/components/ConfirmModal.jsx
-// Lightweight confirmation dialog used before any destructive admin action
-// (delete user, ban user, delete challenge, etc.)
+
 import { AlertTriangle, X } from 'lucide-react';
 
 const ConfirmModal = ({ title, message, confirmLabel = 'Confirm', danger = false, onConfirm, onCancel }) => (
-  // Backdrop – click outside to cancel
+  // Backdrop
   <div
     onClick={onCancel}
     style={{

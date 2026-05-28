@@ -17,7 +17,7 @@ const Signup = () => {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
   
-  // FIX 1: Destructure 'register' from context instead of 'signup'
+
   const { register } = useAuth(); 
   const navigate   = useNavigate();
 
@@ -26,7 +26,6 @@ const Signup = () => {
     setError('');
     setLoading(true);
     try {
-      // FIX 2: Call register() and pass the state variables as a single object
       await register({ name, email, password, institution });
       navigate('/');
     } catch (err) {

@@ -1,13 +1,3 @@
-/**
- * TestCaseViewer.jsx
- *
- * Displays the visible (non-hidden) example test cases from the challenge.
- * Also shows the count of hidden test cases.
- *
- * Props:
- *   examples    [{ input, output, explanation }]   — from challenge.examples (visible)
- *   hiddenCount number                              — from challenge.hiddenTests
- */
 
 export default function TestCaseViewer({ examples = [], hiddenCount = 0 }) {
   if (examples.length === 0 && hiddenCount === 0) return null;

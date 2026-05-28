@@ -16,7 +16,6 @@ const Dashboard = () => {
       try {
         setLoadingWeekly(true);
         const res = await apiClient.get('/challenges/weekly');
-        // FIX: The backend returns it nested inside 'challenge'
         setWeekly(res.data?.data?.challenge || null);
       } catch (err) {
         console.log('No weekly challenge found');

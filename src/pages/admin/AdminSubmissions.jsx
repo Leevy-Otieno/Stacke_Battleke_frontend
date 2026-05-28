@@ -1,10 +1,3 @@
-// src/pages/admin/AdminSubmissions.jsx
-// View all submissions with:
-// - Filter by status, language, challenge title (debounced search)
-// - View submitted code in a modal
-// - Delete submission (with confirmation)
-// - Rejudge submission (re-triggers backend judge)
-// - Pagination
 import { useState, useCallback, useEffect } from 'react';
 import { Search, Eye, Trash2, RefreshCw, X } from 'lucide-react';
 import { PageLoader, ErrorMessage } from '../../components/UI';
@@ -30,9 +23,9 @@ const AdminSubmissions = () => {
   const [langFilter, setLang]       = useState('all');
   const [page, setPage]             = useState(1);
   const [toast, setToast]           = useState(null);
-  const [codeModal, setCodeModal]   = useState(null); // { code, language, username, challenge }
+  const [codeModal, setCodeModal]   = useState(null); 
   const [deleteModal, setDeleteModal] = useState(null);
-  const [actionId, setActionId]     = useState(null); // tracks which row is mid-action
+  const [actionId, setActionId]     = useState(null); 
 
   const debSearch = useDebounce(search, 350);
 
